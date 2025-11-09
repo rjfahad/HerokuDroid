@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:herokuandroid/core/constants/theme_constants.dart';
 import 'package:herokuandroid/data/models/app.dart';
+import 'package:herokuandroid/presentation/screens/app_details/app_details_screen.dart';
 import 'package:intl/intl.dart';
 
 /// Card widget to display a Heroku app
@@ -14,12 +15,9 @@ class AppCard extends StatelessWidget {
     return Card(
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to app details screen
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Tapped on ${app.name}'),
-              duration: const Duration(seconds: 1),
-            ),
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AppDetailsScreen(app: app)),
           );
         },
         borderRadius: BorderRadius.circular(ThemeConstants.radiusL),

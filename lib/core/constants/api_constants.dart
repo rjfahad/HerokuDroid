@@ -47,6 +47,10 @@ class ApiConstants {
   /// Get add-ons
   static String addons(String appId) => '/apps/$appId/addons';
 
+  /// Get specific add-on
+  static String addon(String appId, String addonId) =>
+      '/apps/$appId/addons/$addonId';
+
   /// Get releases
   static String releases(String appId) => '/apps/$appId/releases';
 
