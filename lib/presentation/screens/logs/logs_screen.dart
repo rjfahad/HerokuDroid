@@ -27,6 +27,7 @@ class _LogsScreenState extends State<LogsScreen> {
   LogLevel? _levelFilter;
   String? _sourceFilter;
   String? _dynoFilter;
+  late LogProvider _logProvider;
 
   @override
   void initState() {
@@ -35,11 +36,17 @@ class _LogsScreenState extends State<LogsScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _logProvider = context.read<LogProvider>();
+  }
+
+  @override
   void dispose() {
     _scrollController.removeListener(_handleScroll);
     _scrollController.dispose();
     // Disconnect when leaving screen
-    context.read<LogProvider>().disconnect();
+    _logProvider.disconnect();
     super.dispose();
   }
 

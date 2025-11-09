@@ -19,6 +19,8 @@ class AddonsContent extends StatefulWidget {
 }
 
 class _AddonsContentState extends State<AddonsContent> {
+  late ScaffoldMessengerState _scaffoldMessenger;
+
   @override
   void initState() {
     super.initState();
@@ -27,15 +29,25 @@ class _AddonsContentState extends State<AddonsContent> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scaffoldMessenger = ScaffoldMessenger.of(context);
+  }
+
   Future<void> _openDashboard(String? webUrl) async {
     if (webUrl == null || webUrl.isEmpty) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Dashboard URL not available'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        try {
+          _scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Dashboard URL not available'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        } catch (e) {
+          // Ignore if widget is disposed
+        }
       }
       return;
     }
@@ -49,12 +61,16 @@ class _AddonsContentState extends State<AddonsContent> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to open dashboard: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        try {
+          _scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to open dashboard: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } catch (e) {
+          // Ignore if widget is disposed
+        }
       }
     }
   }
@@ -179,6 +195,38 @@ class AddonCard extends StatelessWidget {
     return planName;
   }
 
+  String _getPricing(String planName) {
+    // Determine pricing based on plan name (placeholder logic)
+    final lowerPlan = planName.toLowerCase();
+    if (lowerPlan.contains('free') || lowerPlan.contains('hobby-dev')) {
+      return 'FREE';
+    } else if (lowerPlan.contains('hobby-basic') ||
+        lowerPlan.contains('mini')) {
+      return '\$7.00/month';
+    } else if (lowerPlan.contains('essential') ||
+        lowerPlan.contains('standard')) {
+      return '\$50.00/month';
+    } else if (lowerPlan.contains('premium')) {
+      return '\$15.00/month';
+    } else {
+      return 'See dashboard';
+    }
+  }
+
+  String _getMetrics(String serviceName, String planName) {
+    // Provide sample metrics based on service (placeholder data)
+    final lowerService = serviceName.toLowerCase();
+    if (lowerService.contains('postgres')) {
+      return '10GB storage • 20 connections';
+    } else if (lowerService.contains('redis')) {
+      return '25MB memory • 40 connections';
+    } else if (lowerService.contains('papertrail')) {
+      return '50MB/day • 7 days retention';
+    } else {
+      return 'View dashboard for details';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -255,34 +303,83 @@ class AddonCard extends StatelessWidget {
               const SizedBox(height: 12),
               const Divider(height: 1),
               const SizedBox(height: 12),
-              // Plan info
+              // Plan info and pricing
               Row(
                 children: [
                   Icon(Icons.label, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 8),
-                  Text(
-                    _formatPlanName(addon.planName),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                      fontWeight: FontWeight.w500,
+                  Expanded(
+                    child: Text(
+                      _formatPlanName(addon.planName),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      _getPricing(addon.planName),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blue,
+                      ),
                     ),
                   ),
                 ],
               ),
-              if (addon.webUrl != null && addon.webUrl!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.open_in_new, size: 16, color: Colors.grey[600]),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Open Dashboard',
-                      style: TextStyle(fontSize: 14, color: Colors.blue[700]),
+              const SizedBox(height: 12),
+              // Metrics
+              Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _getMetrics(addon.serviceName, addon.planName),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              // Action buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (addon.webUrl != null && addon.webUrl!.isNotEmpty)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: onTap,
+                        icon: const Icon(Icons.open_in_browser, size: 18),
+                        label: const Text('Open Dashboard'),
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      // TODO: Implement remove addon
+                    },
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    label: const Text('Remove'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

@@ -1,11 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../data/models/app.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/constants/theme_constants.dart';
+import '../../../providers/apps_provider.dart';
 
-class OverviewTab extends StatelessWidget {
+class OverviewTab extends StatefulWidget {
   final App app;
 
   const OverviewTab({super.key, required this.app});
+
+  @override
+  State<OverviewTab> createState() => _OverviewTabState();
+}
+
+class _OverviewTabState extends State<OverviewTab> {
+  bool _isTogglingMaintenance = false;
+
+  Future<void> _toggleMaintenanceMode(bool enabled) async {
+    setState(() => _isTogglingMaintenance = true);
+
+    final success = await context.read<AppsProvider>().toggleMaintenanceMode(
+      widget.app.id,
+      enabled,
+    );
+
+    if (mounted) {
+      setState(() => _isTogglingMaintenance = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? enabled
+                      ? 'Maintenance mode enabled'
+                      : 'Maintenance mode disabled'
+                : 'Failed to toggle maintenance mode',
+          ),
+          backgroundColor: success ? Colors.green : Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open $url'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _copyToClipboard(String text, String label) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Copied $label to clipboard'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   String _formatDate(DateTime dateTime) {
     final now = DateTime.now();
@@ -49,7 +112,7 @@ class OverviewTab extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  if (app.maintenance == true)
+                  if (widget.app.maintenance == true)
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -107,34 +170,211 @@ class OverviewTab extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildInfoRow('App ID', app.id),
+                  _buildInfoRow('App Name', widget.app.name),
                   const SizedBox(height: 12),
-                  _buildInfoRow('App Name', app.name),
+                  _buildInfoRow('Region', widget.app.region ?? 'N/A'),
                   const SizedBox(height: 12),
-                  _buildInfoRow('Region', app.region ?? 'N/A'),
+                  _buildInfoRow('Stack', widget.app.stack ?? 'N/A'),
                   const SizedBox(height: 12),
-                  _buildInfoRow('Stack', app.stack ?? 'N/A'),
-                  const SizedBox(height: 12),
-                  if (app.createdAt != null)
+                  if (widget.app.createdAt != null)
                     _buildInfoRow(
                       'Created',
-                      '${DateFormat('MMM d, yyyy').format(app.createdAt!)} (${_formatDate(app.createdAt!)})',
+                      '${DateFormat('MMM d, yyyy').format(widget.app.createdAt!)} (${_formatDate(widget.app.createdAt!)})',
                     ),
-                  if (app.createdAt != null) const SizedBox(height: 12),
-                  if (app.updatedAt != null)
+                  if (widget.app.createdAt != null) const SizedBox(height: 12),
+                  if (widget.app.updatedAt != null)
                     _buildInfoRow(
                       'Updated',
-                      '${DateFormat('MMM d, yyyy').format(app.updatedAt!)} (${_formatDate(app.updatedAt!)})',
+                      '${DateFormat('MMM d, yyyy').format(widget.app.updatedAt!)} (${_formatDate(widget.app.updatedAt!)})',
                     ),
-                  if (app.updatedAt != null) const SizedBox(height: 12),
-                  if (app.webUrl != null) ...[
-                    const SizedBox(height: 12),
-                    _buildInfoRow('Web URL', app.webUrl!),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Quick Links Card
+          if (widget.app.webUrl != null || widget.app.gitUrl != null)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Links',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (widget.app.webUrl != null) ...[
+                      InkWell(
+                        onTap: () => _launchUrl(widget.app.webUrl!),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: ThemeConstants.primaryAccent
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.open_in_browser,
+                                  color: ThemeConstants.primaryAccent,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Open App',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      widget.app.webUrl!,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: Colors.grey[400],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    if (widget.app.gitUrl != null) ...[
+                      InkWell(
+                        onTap: () =>
+                            _copyToClipboard(widget.app.gitUrl!, 'Git URL'),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300]?.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.link,
+                                  color: Colors.grey[700],
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Git URL',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      widget.app.gitUrl!,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                        fontFamily: 'monospace',
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.copy,
+                                size: 16,
+                                color: Colors.grey[400],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
-                  if (app.gitUrl != null) ...[
-                    const SizedBox(height: 12),
-                    _buildInfoRow('Git URL', app.gitUrl!),
-                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: 16),
+
+          // Maintenance Mode Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Maintenance Mode',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Enable maintenance mode',
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Puts app in maintenance state',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _isTogglingMaintenance
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Switch(
+                              value: widget.app.maintenance ?? false,
+                              onChanged: (value) =>
+                                  _toggleMaintenanceMode(value),
+                              activeColor: ThemeConstants.statusWarning,
+                            ),
+                    ],
+                  ),
                 ],
               ),
             ),

@@ -20,6 +20,8 @@ class AppDetailsScreen extends StatelessWidget {
           title: Text(app.name),
           bottom: TabBar(
             isScrollable: false,
+            labelColor: Theme.of(context).primaryColor,
+            unselectedLabelColor: Colors.grey[600],
             tabs: const [
               Tab(text: 'Overview'),
               Tab(text: 'Dynos'),

@@ -99,6 +99,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // Search bar
           _buildSearchBar(),
 
+          // Header with app count and view toggle
+          _buildHeader(),
+
           // Apps list
           Expanded(
             child: Consumer<AppsProvider>(
@@ -165,17 +168,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 return RefreshIndicator(
                   onRefresh: appsProvider.refreshApps,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(
-                      top: ThemeConstants.spacingS,
-                      bottom: ThemeConstants.spacingL,
-                    ),
-                    itemCount: appsProvider.apps.length,
-                    itemBuilder: (context, index) {
-                      final app = appsProvider.apps[index];
-                      return AppCard(app: app);
-                    },
-                  ),
+                  child: appsProvider.isGridView
+                      ? GridView.builder(
+                          padding: const EdgeInsets.all(
+                            ThemeConstants.spacingM,
+                          ),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.85,
+                                crossAxisSpacing: ThemeConstants.spacingM,
+                                mainAxisSpacing: ThemeConstants.spacingM,
+                              ),
+                          itemCount: appsProvider.apps.length,
+                          itemBuilder: (context, index) {
+                            final app = appsProvider.apps[index];
+                            return AppCard(app: app, isGridView: true);
+                          },
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(
+                            top: ThemeConstants.spacingS,
+                            bottom: ThemeConstants.spacingL,
+                          ),
+                          itemCount: appsProvider.apps.length,
+                          itemBuilder: (context, index) {
+                            final app = appsProvider.apps[index];
+                            return AppCard(app: app);
+                          },
+                        ),
                 );
               },
             ),
@@ -185,31 +206,108 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildHeader() {
+    return Consumer<AppsProvider>(
+      builder: (context, appsProvider, _) {
+        final appCount = appsProvider.apps.length;
+        final totalCount = appsProvider.allApps.length;
+        final isFiltered = appsProvider.searchQuery.isNotEmpty;
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              // App count
+              Text(
+                isFiltered
+                    ? 'My Apps ($appCount of $totalCount)'
+                    : 'My Apps ($appCount)',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: ThemeConstants.textSecondary,
+                ),
+              ),
+              const Spacer(),
+              // View toggle buttons
+              Container(
+                decoration: BoxDecoration(
+                  color: ThemeConstants.surfaceLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildViewToggleButton(
+                      icon: Icons.grid_view_rounded,
+                      isSelected: appsProvider.isGridView,
+                      onPressed: () {
+                        if (!appsProvider.isGridView) {
+                          appsProvider.toggleViewMode();
+                        }
+                      },
+                      tooltip: 'Grid view',
+                    ),
+                    _buildViewToggleButton(
+                      icon: Icons.view_list_rounded,
+                      isSelected: !appsProvider.isGridView,
+                      onPressed: () {
+                        if (appsProvider.isGridView) {
+                          appsProvider.toggleViewMode();
+                        }
+                      },
+                      tooltip: 'List view',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildViewToggleButton({
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return IconButton(
+      icon: Icon(icon),
+      iconSize: 20,
+      color: isSelected
+          ? ThemeConstants.primaryAccent
+          : ThemeConstants.textSecondary,
+      onPressed: onPressed,
+      tooltip: tooltip,
+      padding: const EdgeInsets.all(8),
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+    );
+  }
+
   Widget _buildSearchBar() {
     return Container(
-      padding: const EdgeInsets.all(ThemeConstants.spacingM),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: const Border(
+          bottom: BorderSide(color: ThemeConstants.dividerColor, width: 1),
+        ),
       ),
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
           hintText: 'Search apps...',
-          prefixIcon: const Icon(Icons.search),
+          prefixIcon: const Icon(Icons.search_rounded, size: 20),
           suffixIcon: Consumer<AppsProvider>(
             builder: (context, appsProvider, _) {
               if (appsProvider.searchQuery.isEmpty) {
                 return const SizedBox.shrink();
               }
               return IconButton(
-                icon: const Icon(Icons.clear),
+                icon: const Icon(Icons.clear_rounded, size: 20),
                 onPressed: () {
                   _searchController.clear();
                   context.read<AppsProvider>().clearSearch();

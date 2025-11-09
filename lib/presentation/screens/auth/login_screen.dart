@@ -45,40 +45,65 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(ThemeConstants.spacingL),
+            padding: const EdgeInsets.all(24),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // App logo/icon
-                  Icon(
-                    Icons.cloud,
-                    size: ThemeConstants.iconSizeXl * 2,
-                    color: ThemeConstants.herokuPurple,
+                  // App logo/icon - Modern gradient
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          ThemeConstants.primaryAccent,
+                          ThemeConstants.secondaryAccent,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: ThemeConstants.primaryAccent.withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.cloud_rounded,
+                      size: 40,
+                      color: Colors.white,
+                    ),
                   ),
-                  const SizedBox(height: ThemeConstants.spacingL),
+                  const SizedBox(height: 24),
 
                   // App name
-                  Text(
+                  const Text(
                     'HerokuDroid',
-                    style: ThemeConstants.headingLarge.copyWith(
-                      color: ThemeConstants.herokuPurple,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: ThemeConstants.spacingS),
+                  const SizedBox(height: 8),
 
                   // Subtitle
-                  Text(
-                    'Manage your Heroku apps on the go',
-                    style: ThemeConstants.bodyMedium.copyWith(
+                  const Text(
+                    'Manage your Heroku apps with ease',
+                    style: TextStyle(
+                      fontSize: 15,
                       color: ThemeConstants.textSecondary,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: ThemeConstants.spacingXl),
+                  const SizedBox(height: 40),
 
                   // Token input field
                   TextFormField(
@@ -87,12 +112,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(
                       labelText: 'API Token',
                       hintText: 'Enter your Heroku API token',
-                      prefixIcon: const Icon(Icons.vpn_key),
+                      prefixIcon: const Icon(Icons.vpn_key_rounded, size: 20),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureToken
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                              ? Icons.visibility_rounded
+                              : Icons.visibility_off_rounded,
+                          size: 20,
                         ),
                         onPressed: () {
                           setState(() {
@@ -113,39 +139,37 @@ class _LoginScreenState extends State<LoginScreen> {
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _handleLogin(),
                   ),
-                  const SizedBox(height: ThemeConstants.spacingL),
+                  const SizedBox(height: 20),
 
                   // Error message
                   Consumer<AuthProvider>(
                     builder: (context, authProvider, _) {
                       if (authProvider.error != null) {
                         return Container(
-                          padding: const EdgeInsets.all(
-                            ThemeConstants.spacingM,
-                          ),
-                          margin: const EdgeInsets.only(
-                            bottom: ThemeConstants.spacingL,
-                          ),
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(bottom: 20),
                           decoration: BoxDecoration(
                             color: ThemeConstants.statusError.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(
-                              ThemeConstants.radiusM,
-                            ),
+                            borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: ThemeConstants.statusError,
+                              color: ThemeConstants.statusError.withOpacity(
+                                0.3,
+                              ),
                             ),
                           ),
                           child: Row(
                             children: [
                               const Icon(
-                                Icons.error_outline,
+                                Icons.error_outline_rounded,
                                 color: ThemeConstants.statusError,
+                                size: 20,
                               ),
-                              const SizedBox(width: ThemeConstants.spacingM),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   authProvider.error!,
-                                  style: ThemeConstants.bodySmall.copyWith(
+                                  style: const TextStyle(
+                                    fontSize: 13,
                                     color: ThemeConstants.statusError,
                                   ),
                                 ),

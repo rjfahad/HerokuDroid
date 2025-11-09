@@ -19,6 +19,7 @@ class AppsProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   String _searchQuery = '';
+  bool _isGridView = false; // Default to list view
 
   List<App> get apps => _filteredApps;
   List<App> get allApps => _apps;
@@ -26,6 +27,7 @@ class AppsProvider extends ChangeNotifier {
   String? get error => _error;
   String get searchQuery => _searchQuery;
   bool get hasApps => _apps.isNotEmpty;
+  bool get isGridView => _isGridView;
 
   /// Get filtered apps based on search query
   List<App> get _filteredApps {
@@ -68,6 +70,10 @@ class AppsProvider extends ChangeNotifier {
   Future<void> _loadAppsFromNetwork() async {
     try {
       _apps = await _repository.getApps();
+
+      // Load formation data for each app to get dyno counts
+      await _enrichAppsWithFormationData();
+
       await _cacheService.cacheApps(_apps);
       _error = null;
     } on HerokuException catch (e) {
@@ -85,6 +91,38 @@ class AppsProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Enrich apps with formation data (dyno counts)
+  Future<void> _enrichAppsWithFormationData() async {
+    final enrichedApps = <App>[];
+
+    for (final app in _apps) {
+      try {
+        final formations = await _repository.getFormation(app.id);
+
+        // Calculate total dynos and running dynos
+        int totalDynos = 0;
+        int runningDynos = 0;
+
+        for (final formation in formations) {
+          totalDynos += formation.quantity;
+          if (formation.quantity > 0) {
+            runningDynos += formation.quantity;
+          }
+        }
+
+        // Create updated app with dyno data
+        enrichedApps.add(
+          app.copyWith(totalDynos: totalDynos, runningDynos: runningDynos),
+        );
+      } catch (e) {
+        // If we can't get formation data, just use the app without dyno info
+        enrichedApps.add(app);
+      }
+    }
+
+    _apps = enrichedApps;
   }
 
   /// Refresh apps (pull to refresh)
@@ -153,7 +191,7 @@ class AppsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sort apps by created date
+  /// Sort apps by date
   void sortByDate({bool ascending = false}) {
     _apps.sort((a, b) {
       if (a.createdAt == null || b.createdAt == null) return 0;
@@ -161,6 +199,12 @@ class AppsProvider extends ChangeNotifier {
           ? a.createdAt!.compareTo(b.createdAt!)
           : b.createdAt!.compareTo(a.createdAt!);
     });
+    notifyListeners();
+  }
+
+  /// Toggle between grid and list view
+  void toggleViewMode() {
+    _isGridView = !_isGridView;
     notifyListeners();
   }
 }

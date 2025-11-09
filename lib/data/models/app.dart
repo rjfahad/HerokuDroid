@@ -12,6 +12,10 @@ class App {
   final String? buildpackProvidedDescription;
   final Map<String, dynamic>? owner;
 
+  // Dyno formation summary (optional, loaded separately)
+  final int? totalDynos;
+  final int? runningDynos;
+
   App({
     required this.id,
     required this.name,
@@ -24,6 +28,8 @@ class App {
     this.maintenance,
     this.buildpackProvidedDescription,
     this.owner,
+    this.totalDynos,
+    this.runningDynos,
   });
 
   /// Create App from JSON
@@ -78,6 +84,8 @@ class App {
     bool? maintenance,
     String? buildpackProvidedDescription,
     Map<String, dynamic>? owner,
+    int? totalDynos,
+    int? runningDynos,
   }) {
     return App(
       id: id ?? this.id,
@@ -92,6 +100,8 @@ class App {
       buildpackProvidedDescription:
           buildpackProvidedDescription ?? this.buildpackProvidedDescription,
       owner: owner ?? this.owner,
+      totalDynos: totalDynos ?? this.totalDynos,
+      runningDynos: runningDynos ?? this.runningDynos,
     );
   }
 

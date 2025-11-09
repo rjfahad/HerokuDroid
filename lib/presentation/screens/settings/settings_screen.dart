@@ -36,7 +36,7 @@ class SettingsScreen extends StatelessWidget {
               child: Text(
                 'Appearance',
                 style: ThemeConstants.headingSmall.copyWith(
-                  color: ThemeConstants.herokuPurple,
+                  color: ThemeConstants.primaryAccent,
                 ),
               ),
             ),
@@ -91,7 +91,7 @@ class SettingsScreen extends StatelessWidget {
           child: Text(
             'Cache',
             style: ThemeConstants.headingSmall.copyWith(
-              color: ThemeConstants.herokuPurple,
+              color: ThemeConstants.primaryAccent,
             ),
           ),
         ),
@@ -154,7 +154,7 @@ class SettingsScreen extends StatelessWidget {
           child: Text(
             'About',
             style: ThemeConstants.headingSmall.copyWith(
-              color: ThemeConstants.herokuPurple,
+              color: ThemeConstants.primaryAccent,
             ),
           ),
         ),
