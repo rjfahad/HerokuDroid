@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/app.dart';
+import '../../../widgets/addons/addons_content.dart';
 
 class AddOnsTab extends StatelessWidget {
   final App app;
@@ -8,6 +9,6 @@ class AddOnsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Add-ons Tab - Coming Soon'));
+    return AddonsContent(appId: app.id);
   }
 }

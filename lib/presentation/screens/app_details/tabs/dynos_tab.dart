@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/app.dart';
+import '../../../widgets/dynos/dynos_content.dart';
 
 class DynosTab extends StatelessWidget {
   final App app;
@@ -8,6 +9,6 @@ class DynosTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Dynos Tab - Coming Soon'));
+    return DynosContent(appId: app.id);
   }
 }
