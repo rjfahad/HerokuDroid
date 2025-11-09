@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:herokuandroid/core/constants/theme_constants.dart';
 import 'package:herokuandroid/presentation/providers/apps_provider.dart';
 import 'package:herokuandroid/presentation/providers/auth_provider.dart';
@@ -7,7 +8,7 @@ import 'package:herokuandroid/presentation/screens/auth/login_screen.dart';
 import 'package:herokuandroid/presentation/screens/settings/settings_screen.dart';
 import 'package:herokuandroid/presentation/widgets/common/app_card.dart';
 import 'package:herokuandroid/presentation/widgets/common/empty_state_widget.dart';
-import 'package:herokuandroid/presentation/widgets/common/loading_widget.dart';
+import 'package:herokuandroid/presentation/widgets/common/skeleton_widgets.dart';
 
 /// Dashboard screen showing list of Heroku apps
 class DashboardScreen extends StatefulWidget {
@@ -103,7 +104,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Consumer<AppsProvider>(
               builder: (context, appsProvider, _) {
                 if (appsProvider.isLoading && !appsProvider.hasApps) {
-                  return const LoadingWidget(message: 'Loading apps...');
+                  // Show shimmer loading effect
+                  return Skeletonizer(
+                    enabled: true,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.only(
+                        top: ThemeConstants.spacingS,
+                        bottom: ThemeConstants.spacingL,
+                      ),
+                      itemCount: 5,
+                      itemBuilder: (context, index) => const AppCardSkeleton(),
+                    ),
+                  );
                 }
 
                 if (appsProvider.error != null && !appsProvider.hasApps) {

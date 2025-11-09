@@ -8,6 +8,7 @@ import 'package:herokuandroid/data/repositories/app_repository.dart';
 import 'package:herokuandroid/data/repositories/auth_repository.dart';
 import 'package:herokuandroid/data/repositories/config_repository.dart';
 import 'package:herokuandroid/data/repositories/log_repository.dart';
+import 'package:herokuandroid/data/services/cache_service.dart';
 import 'package:herokuandroid/data/services/heroku_api_service.dart';
 import 'package:herokuandroid/data/services/log_stream_service.dart';
 import 'package:herokuandroid/data/services/secure_storage_service.dart';
@@ -26,6 +27,7 @@ void main() async {
   // Initialize services
   final secureStorage = SecureStorageService();
   final apiService = HerokuApiService(secureStorage);
+  final cacheService = CacheService(prefs);
   final logStreamService = LogStreamService(
     Dio(),
   ); // Separate Dio for streaming
@@ -54,7 +56,10 @@ void main() async {
         ),
         // Provide AppsProvider
         ChangeNotifierProvider(
-          create: (_) => AppsProvider(repository: appRepository),
+          create: (_) => AppsProvider(
+            repository: appRepository,
+            cacheService: cacheService,
+          ),
         ),
         // Provide ConfigProvider
         ChangeNotifierProvider(

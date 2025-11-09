@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:herokuandroid/presentation/providers/config_provider.dart';
 import 'package:herokuandroid/presentation/widgets/common/error_widget.dart'
     as custom;
-import 'package:herokuandroid/presentation/widgets/common/loading_widget.dart';
+import 'package:herokuandroid/presentation/widgets/common/skeleton_widgets.dart';
 
 /// Screen for managing config vars (environment variables)
 class ConfigVarsScreen extends StatefulWidget {
@@ -221,7 +222,14 @@ class _ConfigVarsScreenState extends State<ConfigVarsScreen> {
 
   Widget _buildContent(ConfigProvider provider) {
     if (provider.isLoading) {
-      return const LoadingWidget(message: 'Loading config vars...');
+      // Show shimmer loading effect
+      return Skeletonizer(
+        enabled: true,
+        child: ListView.builder(
+          itemCount: 6,
+          itemBuilder: (context, index) => const ConfigVarSkeleton(),
+        ),
+      );
     }
 
     if (provider.error != null) {
@@ -263,20 +271,26 @@ class _ConfigVarsScreenState extends State<ConfigVarsScreen> {
       );
     }
 
-    return ListView.builder(
-      itemCount: filteredVars.length,
-      itemBuilder: (context, index) {
-        final entry = filteredVars[index];
-        return _ConfigVarItem(
-          configKey: entry.key,
-          configValue: entry.value,
-          onEdit: () => _showAddEditDialog(
-            existingKey: entry.key,
-            existingValue: entry.value,
-          ),
-          onDelete: () => _confirmDelete(entry.key),
-        );
+    // Add pull-to-refresh
+    return RefreshIndicator(
+      onRefresh: () async {
+        await provider.loadConfigVars(widget.appId);
       },
+      child: ListView.builder(
+        itemCount: filteredVars.length,
+        itemBuilder: (context, index) {
+          final entry = filteredVars[index];
+          return _ConfigVarItem(
+            configKey: entry.key,
+            configValue: entry.value,
+            onEdit: () => _showAddEditDialog(
+              existingKey: entry.key,
+              existingValue: entry.value,
+            ),
+            onDelete: () => _confirmDelete(entry.key),
+          );
+        },
+      ),
     );
   }
 }

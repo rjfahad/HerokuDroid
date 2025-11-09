@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:herokuandroid/data/models/addon.dart';
 import 'package:herokuandroid/presentation/providers/addon_provider.dart';
 import 'package:herokuandroid/presentation/widgets/common/error_widget.dart'
     as custom;
-import 'package:herokuandroid/presentation/widgets/common/loading_widget.dart';
+import 'package:herokuandroid/presentation/widgets/common/skeleton_widgets.dart';
 
 /// Screen for viewing add-ons
 class AddonsScreen extends StatefulWidget {
@@ -71,7 +72,15 @@ class _AddonsScreenState extends State<AddonsScreen> {
 
   Widget _buildContent(AddonProvider provider) {
     if (provider.isLoading) {
-      return const LoadingWidget(message: 'Loading add-ons...');
+      // Show shimmer loading effect
+      return Skeletonizer(
+        enabled: true,
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: 4,
+          itemBuilder: (context, index) => const AddonSkeleton(),
+        ),
+      );
     }
 
     if (provider.error != null) {

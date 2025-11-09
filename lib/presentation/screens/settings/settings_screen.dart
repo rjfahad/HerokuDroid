@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:herokuandroid/core/constants/theme_constants.dart';
+import 'package:herokuandroid/data/services/cache_service.dart';
 import 'package:herokuandroid/presentation/providers/theme_provider.dart';
 
 /// Settings screen for app preferences
@@ -14,6 +16,8 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         children: [
           _buildAppearanceSection(context),
+          const Divider(),
+          _buildCacheSection(context),
           const Divider(),
           _buildAboutSection(context),
         ],
@@ -75,6 +79,69 @@ class SettingsScreen extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildCacheSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(ThemeConstants.spacingM),
+          child: Text(
+            'Cache',
+            style: ThemeConstants.headingSmall.copyWith(
+              color: ThemeConstants.herokuPurple,
+            ),
+          ),
+        ),
+        ListTile(
+          title: const Text('Clear Cache'),
+          subtitle: const Text('Remove cached app data'),
+          leading: const Icon(Icons.delete_sweep),
+          onTap: () => _showClearCacheDialog(context),
+        ),
+      ],
+    );
+  }
+
+  void _showClearCacheDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Cache?'),
+        content: const Text(
+          'This will remove all cached app data. Your apps will be reloaded from the server.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+
+              // Get CacheService from main.dart dependencies
+              final cacheService = CacheService(
+                await SharedPreferences.getInstance(),
+              );
+
+              await cacheService.clearAllCache();
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Cache cleared successfully'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
     );
   }
 

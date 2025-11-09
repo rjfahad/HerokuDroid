@@ -2,12 +2,18 @@ import 'package:flutter/foundation.dart';
 import 'package:herokuandroid/core/errors/heroku_exception.dart';
 import 'package:herokuandroid/data/models/app.dart';
 import 'package:herokuandroid/data/repositories/app_repository.dart';
+import 'package:herokuandroid/data/services/cache_service.dart';
 
 /// Provider for apps state management
 class AppsProvider extends ChangeNotifier {
   final AppRepository _repository;
+  final CacheService _cacheService;
 
-  AppsProvider({required AppRepository repository}) : _repository = repository;
+  AppsProvider({
+    required AppRepository repository,
+    required CacheService cacheService,
+  }) : _repository = repository,
+       _cacheService = cacheService;
 
   List<App> _apps = [];
   bool _isLoading = false;
@@ -36,20 +42,45 @@ class AppsProvider extends ChangeNotifier {
   }
 
   /// Load all apps
-  Future<void> loadApps() async {
+  Future<void> loadApps({bool forceRefresh = false}) async {
+    // Try to load from cache first if not forcing refresh
+    if (!forceRefresh) {
+      final cachedApps = _cacheService.getCachedApps();
+      if (cachedApps != null) {
+        _apps = cachedApps;
+        _error = null;
+        notifyListeners();
+        // Still fetch fresh data in background
+        _loadAppsFromNetwork();
+        return;
+      }
+    }
+
+    // No cache or force refresh - show loading
     _isLoading = true;
     _error = null;
     notifyListeners();
 
+    await _loadAppsFromNetwork();
+  }
+
+  /// Load apps from network and cache them
+  Future<void> _loadAppsFromNetwork() async {
     try {
       _apps = await _repository.getApps();
+      await _cacheService.cacheApps(_apps);
       _error = null;
     } on HerokuException catch (e) {
       _error = e.message;
-      _apps = [];
+      if (_apps.isEmpty) {
+        // Only clear apps if we don't have cached data
+        _apps = [];
+      }
     } catch (e) {
       _error = 'Failed to load apps: ${e.toString()}';
-      _apps = [];
+      if (_apps.isEmpty) {
+        _apps = [];
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -58,7 +89,7 @@ class AppsProvider extends ChangeNotifier {
 
   /// Refresh apps (pull to refresh)
   Future<void> refreshApps() async {
-    await loadApps();
+    await loadApps(forceRefresh: true);
   }
 
   /// Update search query
