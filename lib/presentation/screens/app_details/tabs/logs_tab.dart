@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/app.dart';
+import '../../logs/logs_screen.dart';
 
 class LogsTab extends StatelessWidget {
   final App app;
@@ -8,6 +9,11 @@ class LogsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Logs Tab - Coming Soon'));
+    // Embed LogsScreen without AppBar (parent TabBar provides navigation)
+    return LogsScreen(
+      appId: app.id,
+      appName: app.name,
+      showAppBar: false, // No app bar when embedded in tab
+    );
   }
 }
