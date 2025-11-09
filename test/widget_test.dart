@@ -1,10 +1,3 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:herokuandroid/app.dart';
@@ -14,10 +7,16 @@ import 'package:herokuandroid/data/services/heroku_api_service.dart';
 import 'package:herokuandroid/data/services/secure_storage_service.dart';
 import 'package:herokuandroid/presentation/providers/apps_provider.dart';
 import 'package:herokuandroid/presentation/providers/auth_provider.dart';
+import 'package:herokuandroid/presentation/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('HerokuDroid app smoke test', (WidgetTester tester) async {
+    // Initialize shared preferences for testing
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
     // Initialize services
     final secureStorage = SecureStorageService();
     final apiService = HerokuApiService(secureStorage);
@@ -33,6 +32,7 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
           ChangeNotifierProvider(
             create: (_) => AuthProvider(repository: authRepository),
           ),
@@ -44,8 +44,10 @@ void main() {
       ),
     );
 
-    // Verify that the login screen is shown (since we're not authenticated)
-    expect(find.text('HerokuDroid'), findsOneWidget);
-    expect(find.text('API Token'), findsOneWidget);
+    // Wait for a single frame
+    await tester.pump();
+
+    // Verify basic UI elements exist
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }

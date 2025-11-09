@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:herokuandroid/app.dart';
 import 'package:herokuandroid/data/repositories/addon_repository.dart';
 import 'package:herokuandroid/data/repositories/app_repository.dart';
@@ -15,8 +16,13 @@ import 'package:herokuandroid/presentation/providers/apps_provider.dart';
 import 'package:herokuandroid/presentation/providers/auth_provider.dart';
 import 'package:herokuandroid/presentation/providers/config_provider.dart';
 import 'package:herokuandroid/presentation/providers/log_provider.dart';
+import 'package:herokuandroid/presentation/providers/theme_provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize shared preferences for theme and caching
+  final prefs = await SharedPreferences.getInstance();
   // Initialize services
   final secureStorage = SecureStorageService();
   final apiService = HerokuApiService(secureStorage);
@@ -40,6 +46,8 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
+        // Provide ThemeProvider
+        ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
         // Provide AuthProvider
         ChangeNotifierProvider(
           create: (_) => AuthProvider(repository: authRepository),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:herokuandroid/core/constants/theme_constants.dart';
 import 'package:herokuandroid/presentation/providers/auth_provider.dart';
+import 'package:herokuandroid/presentation/providers/theme_provider.dart';
 import 'package:herokuandroid/presentation/screens/auth/login_screen.dart';
 import 'package:herokuandroid/presentation/screens/dashboard/dashboard_screen.dart';
 
@@ -11,13 +12,17 @@ class HerokuDroidApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'HerokuDroid',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeConstants.lightTheme,
-      darkTheme: ThemeConstants.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const AuthCheck(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        return MaterialApp(
+          title: 'HerokuDroid',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeConstants.lightTheme,
+          darkTheme: ThemeConstants.darkTheme,
+          themeMode: themeProvider.themeMode,
+          home: const AuthCheck(),
+        );
+      },
     );
   }
 }

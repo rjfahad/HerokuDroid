@@ -4,6 +4,7 @@ import 'package:herokuandroid/core/constants/theme_constants.dart';
 import 'package:herokuandroid/presentation/providers/apps_provider.dart';
 import 'package:herokuandroid/presentation/providers/auth_provider.dart';
 import 'package:herokuandroid/presentation/screens/auth/login_screen.dart';
+import 'package:herokuandroid/presentation/screens/settings/settings_screen.dart';
 import 'package:herokuandroid/presentation/widgets/common/app_card.dart';
 import 'package:herokuandroid/presentation/widgets/common/empty_state_widget.dart';
 import 'package:herokuandroid/presentation/widgets/common/loading_widget.dart';
@@ -75,6 +76,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               context.read<AppsProvider>().refreshApps();
             },
             tooltip: 'Refresh',
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+            tooltip: 'Settings',
           ),
           IconButton(
             icon: const Icon(Icons.logout),

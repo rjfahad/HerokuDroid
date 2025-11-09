@@ -47,6 +47,8 @@ dependencies:
   # Utilities
   intl: ^0.19.0
   url_launcher: ^6.2.0 # Open add-on dashboards in browser
+  skeletonizer: ^2.1.0+1
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +60,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  mockito: ^5.5.1
+  build_runner: ^2.10.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
