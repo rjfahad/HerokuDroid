@@ -7,24 +7,45 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:herokuandroid/main.dart';
+import 'package:herokuandroid/app.dart';
+import 'package:herokuandroid/data/repositories/app_repository.dart';
+import 'package:herokuandroid/data/repositories/auth_repository.dart';
+import 'package:herokuandroid/data/services/heroku_api_service.dart';
+import 'package:herokuandroid/data/services/secure_storage_service.dart';
+import 'package:herokuandroid/presentation/providers/apps_provider.dart';
+import 'package:herokuandroid/presentation/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('HerokuDroid app smoke test', (WidgetTester tester) async {
+    // Initialize services
+    final secureStorage = SecureStorageService();
+    final apiService = HerokuApiService(secureStorage);
+
+    // Initialize repositories
+    final authRepository = AuthRepository(
+      apiService: apiService,
+      storageService: secureStorage,
+    );
+    final appRepository = AppRepository(apiService: apiService);
+
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (_) => AuthProvider(repository: authRepository),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => AppsProvider(repository: appRepository),
+          ),
+        ],
+        child: const HerokuDroidApp(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that the login screen is shown (since we're not authenticated)
+    expect(find.text('HerokuDroid'), findsOneWidget);
+    expect(find.text('API Token'), findsOneWidget);
   });
 }
