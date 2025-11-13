@@ -32,30 +32,27 @@ class AuthRepository {
   }
 
   /// Login with API token
-  Future<void> login(String token) async {
+  Future<Map<String, dynamic>> login(String token) async {
     if (token.trim().isEmpty) {
       throw ValidationException(message: 'API token cannot be empty');
     }
 
-    // Save token temporarily
-    await _storageService.saveToken(token);
-
-    // Test if token is valid by making a test API call
     try {
-      final isValid = await _apiService.testConnection();
-      if (!isValid) {
-        // Token is invalid, clear it
-        await _storageService.deleteToken();
-        throw AuthenticationException.invalidToken();
+      final result = await _apiService.testConnection(token);
+      if (result['success'] != true) {
+        throw AuthenticationException(
+          message:
+              'Invalid API token. Status: ${result['statusCode']} - ${result['statusMessage']}',
+        );
       }
+
+      await _storageService.saveToken(token);
+      return result;
+    } on HerokuException {
+      rethrow;
     } catch (e) {
-      // If test fails, clear the token
-      await _storageService.deleteToken();
-      if (e is HerokuException) {
-        rethrow;
-      }
-      throw AuthenticationException(
-        message: 'Failed to validate token: ${e.toString()}',
+      throw HerokuException(
+        message: 'Network error. Please check your connection and try again.',
       );
     }
   }
@@ -75,7 +72,8 @@ class AuthRepository {
       final hasToken = await _storageService.hasToken();
       if (!hasToken) return false;
 
-      return await _apiService.testConnection();
+      final result = await _apiService.testConnection();
+      return result['success'] == true;
     } catch (e) {
       return false;
     }

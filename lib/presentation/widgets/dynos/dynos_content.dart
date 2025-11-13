@@ -30,10 +30,7 @@ class _DynosContentState extends State<DynosContent> {
       text: formation.quantity.toString(),
     );
 
-    // Heroku Common Runtime dyno types (regular users)
-    // Source: https://devcenter.heroku.com/articles/dyno-tiers
     final baseSizes = [
-      // Eco Tier - $5/month flat fee (1000 hrs shared pool)
       'eco',
 
       // Basic Tier - $7/month
@@ -270,11 +267,14 @@ class _DynosContentState extends State<DynosContent> {
     );
 
     if (confirm == true && mounted) {
-      // Restart all formations
       bool allSuccess = true;
-      for (final formation in context.read<DynoProvider>().formations) {
+      final provider = context.read<DynoProvider>();
+      final formations = provider.formations;
+
+      for (final formation in formations) {
         if (formation.isScaled) {
-          final success = await context.read<DynoProvider>().restartDynosByType(
+          if (!mounted) break;
+          final success = await provider.restartDynosByType(
             widget.appId,
             formation.type,
           );
@@ -282,18 +282,15 @@ class _DynosContentState extends State<DynosContent> {
         }
       }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              allSuccess
-                  ? 'Restarted all dynos'
-                  : 'Some dynos failed to restart',
-            ),
-            backgroundColor: allSuccess ? Colors.green : Colors.orange,
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            allSuccess ? 'Restarted all dynos' : 'Some dynos failed to restart',
           ),
-        );
-      }
+          backgroundColor: allSuccess ? Colors.green : Colors.orange,
+        ),
+      );
     }
   }
 }

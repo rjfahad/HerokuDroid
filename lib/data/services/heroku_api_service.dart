@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:herokudroid/core/constants/api_constants.dart';
 import 'package:herokudroid/core/errors/heroku_exception.dart';
 import 'package:herokudroid/data/services/secure_storage_service.dart';
@@ -27,16 +28,18 @@ class HerokuApiService {
     _dio.interceptors.add(_errorInterceptor());
 
     // Add logging interceptor in debug mode
-    _dio.interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        requestHeader: true,
-        responseHeader: false,
-        error: true,
-        logPrint: (object) => print('[HTTP] $object'),
-      ),
-    );
+    if (kDebugMode) {
+      _dio.interceptors.add(
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+          requestHeader: true,
+          responseHeader: false,
+          error: true,
+          logPrint: (object) => debugPrint('[HTTP] $object'),
+        ),
+      );
+    }
   }
 
   /// Interceptor to add authentication token to requests
@@ -187,15 +190,21 @@ class HerokuApiService {
   }
 
   /// Test API connection with current token
-  Future<bool> testConnection() async {
-    try {
-      final response = await get(
-        ApiConstants.apps,
-        queryParameters: {'limit': '1'},
-      );
-      return response.statusCode == 200;
-    } catch (e) {
-      return false;
-    }
+  Future<Map<String, dynamic>> testConnection([String? token]) async {
+    final options = token != null
+        ? Options(headers: {'Authorization': 'Bearer $token'})
+        : null;
+    final response = await get(
+      ApiConstants.apps,
+      queryParameters: {'limit': '1'},
+      options: options,
+    );
+    return {
+      'success': response.statusCode == 200,
+      'statusCode': response.statusCode,
+      'statusMessage': response.statusMessage ?? 'No message',
+      'data': response.data.toString(),
+      'headers': response.headers.toString(),
+    };
   }
 }

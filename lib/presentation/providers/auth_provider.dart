@@ -48,33 +48,26 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Login with API token
-  Future<bool> login(String token) async {
+  Future<Map<String, dynamic>> login(String token) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await _repository.login(token);
+      final result = await _repository.login(token);
       _isAuthenticated = true;
       _token = token;
       _error = null;
       _isLoading = false;
       notifyListeners();
-      return true;
+      return {'success': true, 'data': result};
     } on HerokuException catch (e) {
       _error = e.message;
       _isAuthenticated = false;
       _token = null;
       _isLoading = false;
       notifyListeners();
-      return false;
-    } catch (e) {
-      _error = 'Failed to login: ${e.toString()}';
-      _isAuthenticated = false;
-      _token = null;
-      _isLoading = false;
-      notifyListeners();
-      return false;
+      return {'success': false, 'error': e.message};
     }
   }
 

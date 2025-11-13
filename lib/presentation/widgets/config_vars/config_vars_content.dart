@@ -105,26 +105,31 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
           TextButton(
             onPressed: () async {
               if (formKey.currentState!.validate()) {
-                Navigator.of(context).pop();
+                final navigator = Navigator.of(context);
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+                final keyText = keyController.text.trim();
+
+                navigator.pop();
+
                 final success = await context
                     .read<ConfigProvider>()
                     .setConfigVar(
                       widget.appId,
-                      keyController.text.trim(),
+                      keyText,
                       valueController.text.trim(),
                     );
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        success
-                            ? '${isEditing ? 'Updated' : 'Added'} ${keyController.text}'
-                            : 'Failed to ${isEditing ? 'update' : 'add'} config var',
-                      ),
-                      backgroundColor: success ? Colors.green : Colors.red,
+
+                if (!mounted) return;
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? '${isEditing ? 'Updated' : 'Added'} $keyText'
+                          : 'Failed to ${isEditing ? 'update' : 'add'} config var',
                     ),
-                  );
-                }
+                    backgroundColor: success ? Colors.green : Colors.red,
+                  ),
+                );
               }
             },
             child: Text(isEditing ? 'Update' : 'Add'),

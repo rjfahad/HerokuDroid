@@ -29,13 +29,34 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.login(_tokenController.text.trim());
+    final result = await authProvider.login(_tokenController.text.trim());
 
-    if (success && mounted) {
-      // Navigate to dashboard
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
-      );
+    if (mounted) {
+      if (result['success'] == true) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        );
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Login successful!'),
+                duration: Duration(seconds: 3),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error'] ?? 'Login failed'),
+            duration: const Duration(seconds: 4),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -109,6 +130,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _tokenController,
                     obscureText: _obscureToken,
+                    onChanged: (_) {
+                      context.read<AuthProvider>().clearError();
+                    },
                     decoration: InputDecoration(
                       labelText: 'API Token',
                       hintText: 'Enter your Heroku API token',

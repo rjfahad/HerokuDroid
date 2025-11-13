@@ -25,17 +25,12 @@ import 'package:herokudroid/presentation/providers/theme_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize shared preferences for theme and caching
   final prefs = await SharedPreferences.getInstance();
-  // Initialize services
   final secureStorage = SecureStorageService();
   final apiService = HerokuApiService(secureStorage);
   final cacheService = CacheService(prefs);
-  final logStreamService = LogStreamService(
-    Dio(),
-  ); // Separate Dio for streaming
+  final logStreamService = LogStreamService(Dio());
 
-  // Initialize repositories
   final authRepository = AuthRepository(
     apiService: apiService,
     storageService: secureStorage,
@@ -52,47 +47,36 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        // Provide ThemeProvider
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
-        // Provide AuthProvider
         ChangeNotifierProvider(
           create: (_) => AuthProvider(repository: authRepository),
         ),
-        // Provide AppsProvider
         ChangeNotifierProvider(
           create: (_) => AppsProvider(
             repository: appRepository,
             cacheService: cacheService,
           ),
         ),
-        // Provide ConfigProvider
         ChangeNotifierProvider(
           create: (_) => ConfigProvider(
             repository: configRepository,
             cacheService: cacheService,
           ),
         ),
-        // Provide AddonProvider
         ChangeNotifierProvider(
           create: (_) => AddonProvider(repository: addonRepository),
         ),
-        // Provide DynoProvider
         ChangeNotifierProvider(
           create: (_) => DynoProvider(formationRepository),
         ),
-        // Provide ReleaseProvider
         ChangeNotifierProvider(
           create: (_) => ReleaseProvider(
             repository: appRepository,
             cacheService: cacheService,
           ),
         ),
-        // Provide LogProvider (depends on AuthProvider for token)
         ChangeNotifierProxyProvider<AuthProvider, LogProvider>(
-          create: (_) => LogProvider(
-            repository: logRepository,
-            token: '', // Will be updated by proxy
-          ),
+          create: (_) => LogProvider(repository: logRepository, token: ''),
           update: (_, authProvider, logProvider) {
             if (logProvider == null) {
               return LogProvider(
@@ -100,7 +84,6 @@ void main() async {
                 token: authProvider.token ?? '',
               );
             }
-            // Update token in existing provider
             logProvider.updateToken(authProvider.token ?? '');
             return logProvider;
           },
