@@ -24,6 +24,9 @@ class ApiConstants {
   /// Get specific app by ID or name
   static String app(String appId) => '/apps/$appId';
 
+  /// Delete specific app
+  static String deleteApp(String appId) => '/apps/$appId';
+
   /// Get dynos for an app
   static String dynos(String appId) => '/apps/$appId/dynos';
 

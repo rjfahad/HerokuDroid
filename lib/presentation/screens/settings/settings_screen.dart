@@ -41,18 +41,6 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             RadioListTile<ThemeMode>(
-              title: const Text('Light Theme'),
-              subtitle: const Text('Use light theme'),
-              value: ThemeMode.light,
-              groupValue: themeProvider.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  themeProvider.setThemeMode(value);
-                }
-              },
-              secondary: const Icon(Icons.light_mode),
-            ),
-            RadioListTile<ThemeMode>(
               title: const Text('Dark Theme'),
               subtitle: const Text('Use dark theme'),
               value: ThemeMode.dark,

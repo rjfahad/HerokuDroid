@@ -2,6 +2,7 @@ import 'package:herokuandroid/core/constants/api_constants.dart';
 import 'package:herokuandroid/data/models/app.dart';
 import 'package:herokuandroid/data/models/dyno.dart';
 import 'package:herokuandroid/data/models/formation.dart';
+import 'package:herokuandroid/data/models/release.dart';
 import 'package:herokuandroid/data/services/heroku_api_service.dart';
 
 /// Repository for Heroku app operations
@@ -29,6 +30,15 @@ class AppRepository {
     try {
       final response = await _apiService.get(ApiConstants.app(appId));
       return App.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Delete an app
+  Future<void> deleteApp(String appId) async {
+    try {
+      await _apiService.delete(ApiConstants.deleteApp(appId));
     } catch (e) {
       rethrow;
     }
@@ -108,6 +118,33 @@ class AppRepository {
       );
 
       return App.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Update app name
+  Future<App> updateAppName(String appId, String newName) async {
+    try {
+      final response = await _apiService.patch(
+        ApiConstants.app(appId),
+        data: {'name': newName},
+      );
+
+      return App.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Get releases (deploy history) for an app
+  Future<List<Release>> getReleases(String appId) async {
+    try {
+      final response = await _apiService.get(ApiConstants.releases(appId));
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) => Release.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       rethrow;
     }

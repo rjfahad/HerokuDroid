@@ -9,6 +9,6 @@ class ConfigTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ConfigVarsContent(appId: app.id, showFab: false);
+    return ConfigVarsContent(appId: app.id, showFab: true);
   }
 }

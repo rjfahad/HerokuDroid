@@ -33,12 +33,13 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
     });
   }
 
-  List<MapEntry<String, String>> get _filteredConfigVars {
-    final provider = context.watch<ConfigProvider>();
+  List<MapEntry<String, String>> _getFilteredConfigVars(
+    Map<String, String> configVars,
+  ) {
     if (_searchQuery.isEmpty) {
-      return provider.configVars.entries.toList();
+      return configVars.entries.toList();
     }
-    return provider.configVars.entries.where((entry) {
+    return configVars.entries.where((entry) {
       return entry.key.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           entry.value.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
@@ -173,12 +174,10 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<ConfigProvider>();
-
     return Scaffold(
       body: Column(
         children: [
-          // Search bar
+          // Search bar - doesn't need to rebuild when provider changes
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -207,8 +206,12 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
             ),
           ),
 
-          // Content
-          Expanded(child: _buildContent(provider)),
+          // Content - use Consumer to only rebuild this part
+          Expanded(
+            child: Consumer<ConfigProvider>(
+              builder: (context, provider, child) => _buildContent(provider),
+            ),
+          ),
         ],
       ),
       floatingActionButton: widget.showFab
@@ -261,7 +264,7 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
       );
     }
 
-    final filteredVars = _filteredConfigVars;
+    final filteredVars = _getFilteredConfigVars(provider.configVars);
 
     if (filteredVars.isEmpty) {
       return Center(

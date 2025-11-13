@@ -29,16 +29,35 @@ class _DynosContentState extends State<DynosContent> {
     final quantityController = TextEditingController(
       text: formation.quantity.toString(),
     );
-    String selectedSize = formation.size;
 
-    final availableSizes = [
+    // Heroku Common Runtime dyno types (regular users)
+    // Source: https://devcenter.heroku.com/articles/dyno-tiers
+    final baseSizes = [
+      // Eco Tier - $5/month flat fee (1000 hrs shared pool)
+      'eco',
+
+      // Basic Tier - $7/month
       'basic',
-      'hobby',
+
+      // Standard Tier - $25-50/month
       'standard-1x',
       'standard-2x',
+
+      // Performance Tier - $250-1500/month (requires payment history)
       'performance-m',
       'performance-l',
+      'performance-l-ram',
+      'performance-xl',
+      'performance-2xl',
     ];
+
+    // Build final list with current size if not already present
+    final availableSizes = <String>[
+      if (!baseSizes.contains(formation.size)) formation.size,
+      ...baseSizes,
+    ];
+
+    String selectedSize = formation.size;
 
     final result = await showDialog<Map<String, dynamic>>(
       context: context,

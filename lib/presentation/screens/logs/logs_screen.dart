@@ -159,13 +159,6 @@ class _LogsScreenState extends State<LogsScreen> {
             onPressed: _showFilterDialog,
             tooltip: 'Filter logs',
           ),
-          IconButton(
-            icon: const Icon(Icons.clear_all),
-            onPressed: () {
-              context.read<LogProvider>().clearLogs();
-            },
-            tooltip: 'Clear logs',
-          ),
         ],
       ),
       body: body,
@@ -188,12 +181,14 @@ class _LogsScreenState extends State<LogsScreen> {
         final isConnected = provider.state == LogConnectionState.connected;
         final isPaused = provider.state == LogConnectionState.paused;
         final isConnecting = provider.state == LogConnectionState.connecting;
+        final hasLogs = provider.logs.isNotEmpty;
 
         return Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           color: _getConnectionColor(provider.state).withOpacity(0.1),
           child: Row(
             children: [
+              // Connection status indicator
               Icon(
                 _getConnectionIcon(provider.state),
                 color: _getConnectionColor(provider.state),
@@ -205,26 +200,93 @@ class _LogsScreenState extends State<LogsScreen> {
                 style: TextStyle(
                   color: _getConnectionColor(provider.state),
                   fontWeight: FontWeight.w500,
+                  fontSize: 13,
                 ),
               ),
+
+              // Log count badge
+              if (hasLogs) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${provider.logs.length}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+
               const Spacer(),
+
+              // Auto-scroll toggle
+              if (hasLogs)
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _autoScroll = !_autoScroll;
+                      if (_autoScroll) {
+                        _scrollToBottom();
+                      }
+                    });
+                  },
+                  icon: Icon(
+                    _autoScroll
+                        ? Icons.vertical_align_bottom
+                        : Icons.vertical_align_bottom_outlined,
+                  ),
+                  tooltip: _autoScroll ? 'Auto-scroll ON' : 'Auto-scroll OFF',
+                  color: _autoScroll ? Colors.green : Colors.grey,
+                  iconSize: 20,
+                ),
+
+              // Clear logs
+              if (hasLogs)
+                IconButton(
+                  onPressed: () {
+                    provider.clearLogs();
+                  },
+                  icon: const Icon(Icons.delete_sweep),
+                  tooltip: 'Clear logs',
+                  color: Colors.grey[700],
+                  iconSize: 20,
+                ),
+
+              // Connection controls
               if (!isConnected && !isPaused && !isConnecting)
                 ElevatedButton.icon(
                   onPressed: () => provider.connect(widget.appId, lines: 100),
                   icon: const Icon(Icons.play_arrow, size: 18),
                   label: const Text('Connect'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
                 ),
               if (isConnected)
                 IconButton(
                   onPressed: provider.pause,
                   icon: const Icon(Icons.pause),
-                  tooltip: 'Pause',
+                  tooltip: 'Pause streaming',
+                  iconSize: 20,
                 ),
               if (isPaused)
                 IconButton(
                   onPressed: provider.resume,
                   icon: const Icon(Icons.play_arrow),
-                  tooltip: 'Resume',
+                  tooltip: 'Resume streaming',
+                  iconSize: 20,
                 ),
               if (isConnected || isPaused)
                 IconButton(
@@ -232,6 +294,7 @@ class _LogsScreenState extends State<LogsScreen> {
                   icon: const Icon(Icons.stop),
                   tooltip: 'Disconnect',
                   color: Colors.red,
+                  iconSize: 20,
                 ),
             ],
           ),

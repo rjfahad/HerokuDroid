@@ -168,35 +168,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 return RefreshIndicator(
                   onRefresh: appsProvider.refreshApps,
-                  child: appsProvider.isGridView
-                      ? GridView.builder(
-                          padding: const EdgeInsets.all(
-                            ThemeConstants.spacingM,
-                          ),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 0.85,
-                                crossAxisSpacing: ThemeConstants.spacingM,
-                                mainAxisSpacing: ThemeConstants.spacingM,
-                              ),
-                          itemCount: appsProvider.apps.length,
-                          itemBuilder: (context, index) {
-                            final app = appsProvider.apps[index];
-                            return AppCard(app: app, isGridView: true);
-                          },
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(
-                            top: ThemeConstants.spacingS,
-                            bottom: ThemeConstants.spacingL,
-                          ),
-                          itemCount: appsProvider.apps.length,
-                          itemBuilder: (context, index) {
-                            final app = appsProvider.apps[index];
-                            return AppCard(app: app);
-                          },
+                  child: GridView.builder(
+                    padding: const EdgeInsets.only(
+                      top: ThemeConstants.spacingS,
+                      bottom: ThemeConstants.spacingL,
+                      left: ThemeConstants.spacingS,
+                      right: ThemeConstants.spacingS,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 1.8,
+                          crossAxisSpacing: ThemeConstants.spacingS,
+                          mainAxisSpacing: ThemeConstants.spacingS,
                         ),
+                    itemCount: appsProvider.apps.length,
+                    itemBuilder: (context, index) {
+                      final app = appsProvider.apps[index];
+                      return AppCard(app: app);
+                    },
+                  ),
                 );
               },
             ),
@@ -228,62 +219,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: ThemeConstants.textSecondary,
                 ),
               ),
-              const Spacer(),
-              // View toggle buttons
-              Container(
-                decoration: BoxDecoration(
-                  color: ThemeConstants.surfaceLight,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildViewToggleButton(
-                      icon: Icons.grid_view_rounded,
-                      isSelected: appsProvider.isGridView,
-                      onPressed: () {
-                        if (!appsProvider.isGridView) {
-                          appsProvider.toggleViewMode();
-                        }
-                      },
-                      tooltip: 'Grid view',
-                    ),
-                    _buildViewToggleButton(
-                      icon: Icons.view_list_rounded,
-                      isSelected: !appsProvider.isGridView,
-                      onPressed: () {
-                        if (appsProvider.isGridView) {
-                          appsProvider.toggleViewMode();
-                        }
-                      },
-                      tooltip: 'List view',
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         );
       },
-    );
-  }
-
-  Widget _buildViewToggleButton({
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onPressed,
-    required String tooltip,
-  }) {
-    return IconButton(
-      icon: Icon(icon),
-      iconSize: 20,
-      color: isSelected
-          ? ThemeConstants.primaryAccent
-          : ThemeConstants.textSecondary,
-      onPressed: onPressed,
-      tooltip: tooltip,
-      padding: const EdgeInsets.all(8),
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
     );
   }
 

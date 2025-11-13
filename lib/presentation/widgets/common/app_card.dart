@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:herokuandroid/core/constants/theme_constants.dart';
 import 'package:herokuandroid/data/models/app.dart';
+import 'package:herokuandroid/presentation/providers/apps_provider.dart';
 import 'package:herokuandroid/presentation/screens/app_details/app_details_screen.dart';
 
 /// Card widget to display a Heroku app
@@ -259,6 +261,47 @@ class AppCard extends StatelessWidget {
                         ],
                       ),
                     ),
+
+                  // 3-dot menu
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        _showDeleteConfirmation(context);
+                      } else if (value == 'rename') {
+                        _showRenameDialog(context);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem<String>(
+                        value: 'rename',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.edit,
+                              color: ThemeConstants.primaryAccent,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Rename App'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete,
+                              color: ThemeConstants.statusError,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Delete App'),
+                          ],
+                        ),
+                      ),
+                    ],
+                    icon: const Icon(Icons.more_vert),
+                    iconSize: 20,
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -298,16 +341,7 @@ class AppCard extends StatelessWidget {
     final runningDynos = app.runningDynos ?? 0;
 
     if (totalDynos == 0) {
-      return Row(
-        children: [
-          _buildStatusDot(ThemeConstants.textHint.withOpacity(0.3)),
-          const SizedBox(width: 4),
-          const Text(
-            'No dynos',
-            style: TextStyle(fontSize: 11, color: ThemeConstants.textSecondary),
-          ),
-        ],
-      );
+      return const SizedBox.shrink();
     }
 
     return Row(
@@ -337,14 +371,7 @@ class AppCard extends StatelessWidget {
     final runningDynos = app.runningDynos ?? 0;
 
     if (totalDynos == 0) {
-      return [
-        _buildStatusDot(ThemeConstants.textHint.withOpacity(0.3)),
-        const SizedBox(width: 8),
-        const Text(
-          'No dynos',
-          style: TextStyle(fontSize: 13, color: ThemeConstants.textSecondary),
-        ),
-      ];
+      return [];
     }
 
     final dots = <Widget>[];
@@ -433,5 +460,116 @@ class AppCard extends StatelessWidget {
       final years = (difference.inDays / 365).floor();
       return '${years}y ago';
     }
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete App'),
+        content: Text(
+          'Are you sure you want to delete "${app.name}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Close dialog
+              final appsProvider = context.read<AppsProvider>();
+              final success = await appsProvider.deleteApp(app.id);
+
+              if (success && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${app.name} deleted successfully'),
+                    backgroundColor: ThemeConstants.statusSuccess,
+                  ),
+                );
+              } else if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(appsProvider.error ?? 'Failed to delete app'),
+                    backgroundColor: ThemeConstants.statusError,
+                  ),
+                );
+              }
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: ThemeConstants.statusError,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRenameDialog(BuildContext context) {
+    final nameController = TextEditingController(text: app.name);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Rename App'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'App Name',
+            hintText: 'Enter new app name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final newName = nameController.text.trim();
+              if (newName.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('App name cannot be empty'),
+                    backgroundColor: ThemeConstants.statusError,
+                  ),
+                );
+                return;
+              }
+
+              if (newName == app.name) {
+                Navigator.pop(dialogContext);
+                return;
+              }
+
+              Navigator.pop(dialogContext); // Close dialog
+              final appsProvider = context.read<AppsProvider>();
+              final success = await appsProvider.renameApp(app.id, newName);
+
+              if (success && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('App renamed to "$newName" successfully'),
+                    backgroundColor: ThemeConstants.statusSuccess,
+                  ),
+                );
+              } else if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(appsProvider.error ?? 'Failed to rename app'),
+                    backgroundColor: ThemeConstants.statusError,
+                  ),
+                );
+              }
+            },
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
   }
 }

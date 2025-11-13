@@ -19,6 +19,7 @@ import 'package:herokuandroid/presentation/providers/auth_provider.dart';
 import 'package:herokuandroid/presentation/providers/config_provider.dart';
 import 'package:herokuandroid/presentation/providers/dyno_provider.dart';
 import 'package:herokuandroid/presentation/providers/log_provider.dart';
+import 'package:herokuandroid/presentation/providers/release_provider.dart';
 import 'package:herokuandroid/presentation/providers/theme_provider.dart';
 
 void main() async {
@@ -66,7 +67,10 @@ void main() async {
         ),
         // Provide ConfigProvider
         ChangeNotifierProvider(
-          create: (_) => ConfigProvider(repository: configRepository),
+          create: (_) => ConfigProvider(
+            repository: configRepository,
+            cacheService: cacheService,
+          ),
         ),
         // Provide AddonProvider
         ChangeNotifierProvider(
@@ -75,6 +79,13 @@ void main() async {
         // Provide DynoProvider
         ChangeNotifierProvider(
           create: (_) => DynoProvider(formationRepository),
+        ),
+        // Provide ReleaseProvider
+        ChangeNotifierProvider(
+          create: (_) => ReleaseProvider(
+            repository: appRepository,
+            cacheService: cacheService,
+          ),
         ),
         // Provide LogProvider (depends on AuthProvider for token)
         ChangeNotifierProxyProvider<AuthProvider, LogProvider>(

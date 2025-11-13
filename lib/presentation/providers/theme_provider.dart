@@ -15,7 +15,6 @@ class ThemeProvider extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
 
   bool get isDarkMode => _themeMode == ThemeMode.dark;
-  bool get isLightMode => _themeMode == ThemeMode.light;
   bool get isSystemMode => _themeMode == ThemeMode.system;
 
   /// Load theme mode from shared preferences
@@ -37,23 +36,18 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Toggle between light and dark mode (skips system mode)
+  /// Toggle between dark and system mode
   Future<void> toggleTheme() async {
-    if (_themeMode == ThemeMode.light) {
-      await setThemeMode(ThemeMode.dark);
+    if (_themeMode == ThemeMode.dark) {
+      await setThemeMode(ThemeMode.system);
     } else {
-      await setThemeMode(ThemeMode.light);
+      await setThemeMode(ThemeMode.dark);
     }
   }
 
   /// Set to dark mode
   Future<void> setDarkMode() async {
     await setThemeMode(ThemeMode.dark);
-  }
-
-  /// Set to light mode
-  Future<void> setLightMode() async {
-    await setThemeMode(ThemeMode.light);
   }
 
   /// Set to system mode
