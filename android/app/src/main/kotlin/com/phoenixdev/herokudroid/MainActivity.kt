@@ -1,4 +1,4 @@
-package com.example.herokuandroid
+package com.phoenixdev.herokudroid
 
 import io.flutter.embedding.android.FlutterActivity
 

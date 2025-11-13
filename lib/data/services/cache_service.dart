@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:herokuandroid/data/models/app.dart';
-import 'package:herokuandroid/data/models/release.dart';
+import 'package:herokudroid/data/models/app.dart';
+import 'package:herokudroid/data/models/release.dart';
 
 /// Service for caching app data to improve performance
 class CacheService {

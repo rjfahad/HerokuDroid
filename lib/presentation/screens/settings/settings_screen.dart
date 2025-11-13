@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:herokuandroid/core/constants/theme_constants.dart';
-import 'package:herokuandroid/data/services/cache_service.dart';
-import 'package:herokuandroid/presentation/providers/theme_provider.dart';
+import 'package:herokudroid/core/constants/theme_constants.dart';
+import 'package:herokudroid/data/services/cache_service.dart';
+import 'package:herokudroid/presentation/providers/theme_provider.dart';
 
 /// Settings screen for app preferences
 class SettingsScreen extends StatelessWidget {

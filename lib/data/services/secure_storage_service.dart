@@ -1,5 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:herokuandroid/core/constants/app_constants.dart';
+import 'package:herokudroid/core/constants/app_constants.dart';
 
 /// Service for securely storing sensitive data like API tokens
 class SecureStorageService {

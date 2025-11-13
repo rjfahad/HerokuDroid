@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:herokuandroid/presentation/widgets/addons/addons_content.dart';
+import 'package:herokudroid/presentation/widgets/addons/addons_content.dart';
 
 /// Screen for viewing add-ons
 class AddonsScreen extends StatelessWidget {

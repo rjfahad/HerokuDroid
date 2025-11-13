@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:herokuandroid/data/models/log_entry.dart';
-import 'package:herokuandroid/presentation/providers/log_provider.dart';
+import 'package:herokudroid/data/models/log_entry.dart';
+import 'package:herokudroid/presentation/providers/log_provider.dart';
 
 /// Screen for viewing real-time application logs
 class LogsScreen extends StatefulWidget {

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:herokuandroid/data/models/formation.dart';
-import 'package:herokuandroid/presentation/providers/dyno_provider.dart';
-import 'package:herokuandroid/presentation/widgets/common/error_widget.dart'
+import 'package:herokudroid/data/models/formation.dart';
+import 'package:herokudroid/presentation/providers/dyno_provider.dart';
+import 'package:herokudroid/presentation/widgets/common/error_widget.dart'
     as custom;
-import 'package:herokuandroid/presentation/widgets/common/loading_widget.dart';
+import 'package:herokudroid/presentation/widgets/common/loading_widget.dart';
 
 /// Reusable widget for displaying and managing dynos
 class DynosContent extends StatefulWidget {

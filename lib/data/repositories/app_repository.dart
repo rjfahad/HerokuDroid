@@ -1,9 +1,9 @@
-import 'package:herokuandroid/core/constants/api_constants.dart';
-import 'package:herokuandroid/data/models/app.dart';
-import 'package:herokuandroid/data/models/dyno.dart';
-import 'package:herokuandroid/data/models/formation.dart';
-import 'package:herokuandroid/data/models/release.dart';
-import 'package:herokuandroid/data/services/heroku_api_service.dart';
+import 'package:herokudroid/core/constants/api_constants.dart';
+import 'package:herokudroid/data/models/app.dart';
+import 'package:herokudroid/data/models/dyno.dart';
+import 'package:herokudroid/data/models/formation.dart';
+import 'package:herokudroid/data/models/release.dart';
+import 'package:herokudroid/data/services/heroku_api_service.dart';
 
 /// Repository for Heroku app operations
 class AppRepository {

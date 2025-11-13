@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:herokuandroid/core/constants/theme_constants.dart';
+import 'package:herokudroid/core/constants/theme_constants.dart';
 import 'package:provider/provider.dart';
 import '../../../data/models/app.dart';
 import '../../providers/dyno_provider.dart';

@@ -1,5 +1,5 @@
-name: herokuandroid
-description: "A new Flutter project."
+name: herokudroid
+description: "HerokuDroid - Manage your Heroku apps on the go"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -62,6 +62,14 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   mockito: ^5.5.1
   build_runner: ^2.10.1
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/logo_icon.png"
+  adaptive_icon_background: "#430098"
+  adaptive_icon_foreground: "assets/images/logo_icon.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -75,9 +83,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/images/logo_icon.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:herokuandroid/data/models/addon.dart';
-import 'package:herokuandroid/presentation/providers/addon_provider.dart';
-import 'package:herokuandroid/presentation/widgets/common/error_widget.dart'
+import 'package:herokudroid/data/models/addon.dart';
+import 'package:herokudroid/presentation/providers/addon_provider.dart';
+import 'package:herokudroid/presentation/widgets/common/error_widget.dart'
     as custom;
-import 'package:herokuandroid/presentation/widgets/common/skeleton_widgets.dart';
+import 'package:herokudroid/presentation/widgets/common/skeleton_widgets.dart';
 
 /// Reusable widget for displaying add-ons
 class AddonsContent extends StatefulWidget {

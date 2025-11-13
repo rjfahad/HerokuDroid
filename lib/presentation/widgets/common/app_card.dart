@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:herokuandroid/core/constants/theme_constants.dart';
-import 'package:herokuandroid/data/models/app.dart';
-import 'package:herokuandroid/presentation/providers/apps_provider.dart';
-import 'package:herokuandroid/presentation/screens/app_details/app_details_screen.dart';
+import 'package:herokudroid/core/constants/theme_constants.dart';
+import 'package:herokudroid/data/models/app.dart';
+import 'package:herokudroid/presentation/providers/apps_provider.dart';
+import 'package:herokudroid/presentation/screens/app_details/app_details_screen.dart';
 
 /// Card widget to display a Heroku app
 class AppCard extends StatelessWidget {
@@ -34,7 +34,7 @@ class AppCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.min, // Changed from default to min
             children: [
               // App icon and maintenance badge
               Row(
@@ -76,7 +76,7 @@ class AppCard extends StatelessWidget {
                           ThemeConstants.radiusS,
                         ),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.construction,
                         size: 16,
                         color: ThemeConstants.statusWarning,
@@ -84,7 +84,7 @@ class AppCard extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
 
               // App name
               Text(
@@ -100,48 +100,62 @@ class AppCard extends StatelessWidget {
 
               // Dyno status - real data
               _buildDynoStatus(),
-              const SizedBox(height: 8),
 
-              // Region and time
-              if (app.region != null)
-                Row(
+              // Spacer to push bottom content down
+              const Spacer(),
+
+              // Region and time - consolidated to save space
+              if (app.region != null || app.updatedAt != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 14,
-                      color: ThemeConstants.textSecondary,
-                    ),
-                    const SizedBox(width: 3),
-                    Expanded(
-                      child: Text(
-                        app.region!,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: ThemeConstants.textSecondary,
+                    if (app.region != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 12,
+                              color: ThemeConstants.textSecondary,
+                            ),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                app.region!,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: ThemeConstants.textSecondary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 2),
-              if (app.updatedAt != null)
-                Row(
-                  children: [
-                    Icon(
-                      Icons.access_time_outlined,
-                      size: 14,
-                      color: ThemeConstants.textSecondary,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      _formatTimeAgo(app.updatedAt!),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: ThemeConstants.textSecondary,
+                    if (app.updatedAt != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.access_time_outlined,
+                              size: 12,
+                              color: ThemeConstants.textSecondary,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              _formatTimeAgo(app.updatedAt!),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: ThemeConstants.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                   ],
                 ),
             ],
@@ -165,6 +179,7 @@ class AppCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min, // Ensure minimum size
             children: [
               // App name and maintenance badge
               Row(
@@ -201,6 +216,7 @@ class AppCard extends StatelessWidget {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           app.name,
@@ -219,6 +235,8 @@ class AppCard extends StatelessWidget {
                               fontSize: 13,
                               color: ThemeConstants.textSecondary,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ],
@@ -227,38 +245,43 @@ class AppCard extends StatelessWidget {
 
                   // Maintenance badge
                   if (app.maintenance == true)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: ThemeConstants.statusWarning.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(
-                          ThemeConstants.radiusS,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
                         ),
-                        border: Border.all(
-                          color: ThemeConstants.statusWarning.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.construction,
-                            size: 14,
-                            color: ThemeConstants.statusWarning,
+                        decoration: BoxDecoration(
+                          color: ThemeConstants.statusWarning.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(
+                            ThemeConstants.radiusS,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Maintenance',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: ThemeConstants.statusWarning,
-                              fontWeight: FontWeight.w600,
+                          border: Border.all(
+                            color: ThemeConstants.statusWarning.withOpacity(
+                              0.3,
                             ),
                           ),
-                        ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.construction,
+                              size: 14,
+                              color: ThemeConstants.statusWarning,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Maintenance',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: ThemeConstants.statusWarning,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 
@@ -310,22 +333,24 @@ class AppCard extends StatelessWidget {
               const Divider(height: 1),
               const SizedBox(height: 10),
 
-              // App details
-              Row(
+              // App details - wrapped to prevent overflow
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   // Dyno status - real data
-                  ..._buildDynoStatusDots(),
-                  const SizedBox(width: 12),
-                  if (app.region != null) ...[
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _buildDynoStatusDots(),
+                  ),
+                  if (app.region != null)
                     _buildInfoChip(Icons.location_on_outlined, app.region!),
-                    const SizedBox(width: 8),
-                  ],
-                  if (app.updatedAt != null) ...[
+                  if (app.updatedAt != null)
                     _buildInfoChip(
                       Icons.access_time_outlined,
                       _formatTimeAgo(app.updatedAt!),
                     ),
-                  ],
                 ],
               ),
             ],

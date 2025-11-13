@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:herokuandroid/core/constants/theme_constants.dart';
-import 'package:herokuandroid/presentation/providers/auth_provider.dart';
-import 'package:herokuandroid/presentation/screens/dashboard/dashboard_screen.dart';
+import 'package:herokudroid/core/constants/theme_constants.dart';
+import 'package:herokudroid/presentation/providers/auth_provider.dart';
+import 'package:herokudroid/presentation/screens/dashboard/dashboard_screen.dart';
 
 /// Login screen for API token input
 class LoginScreen extends StatefulWidget {

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:herokuandroid/core/constants/theme_constants.dart';
-import 'package:herokuandroid/presentation/providers/apps_provider.dart';
-import 'package:herokuandroid/presentation/providers/auth_provider.dart';
-import 'package:herokuandroid/presentation/screens/auth/login_screen.dart';
-import 'package:herokuandroid/presentation/screens/settings/settings_screen.dart';
-import 'package:herokuandroid/presentation/widgets/common/app_card.dart';
-import 'package:herokuandroid/presentation/widgets/common/empty_state_widget.dart';
-import 'package:herokuandroid/presentation/widgets/common/skeleton_widgets.dart';
+import 'package:herokudroid/core/constants/theme_constants.dart';
+import 'package:herokudroid/presentation/providers/apps_provider.dart';
+import 'package:herokudroid/presentation/providers/auth_provider.dart';
+import 'package:herokudroid/presentation/screens/auth/login_screen.dart';
+import 'package:herokudroid/presentation/screens/settings/settings_screen.dart';
+import 'package:herokudroid/presentation/widgets/common/app_card.dart';
+import 'package:herokudroid/presentation/widgets/common/empty_state_widget.dart';
+import 'package:herokudroid/presentation/widgets/common/skeleton_widgets.dart';
 
 /// Dashboard screen showing list of Heroku apps
 class DashboardScreen extends StatefulWidget {
@@ -69,7 +69,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('HerokuDroid'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/logo_icon.png',
+              width: 32,
+              height: 32,
+            ),
+            const SizedBox(width: 8),
+            const Text('HerokuDroid'),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -168,24 +179,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 return RefreshIndicator(
                   onRefresh: appsProvider.refreshApps,
-                  child: GridView.builder(
-                    padding: const EdgeInsets.only(
-                      top: ThemeConstants.spacingS,
-                      bottom: ThemeConstants.spacingL,
-                      left: ThemeConstants.spacingS,
-                      right: ThemeConstants.spacingS,
-                    ),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 1.8,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Responsive grid based on screen width
+                      final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
+                      // Adjust aspect ratio based on screen size
+                      final aspectRatio = constraints.maxWidth > 600
+                          ? 1.3
+                          : 1.4;
+
+                      return GridView.builder(
+                        padding: const EdgeInsets.only(
+                          top: ThemeConstants.spacingS,
+                          bottom: ThemeConstants.spacingL,
+                          left: ThemeConstants.spacingS,
+                          right: ThemeConstants.spacingS,
+                        ),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          childAspectRatio: aspectRatio,
                           crossAxisSpacing: ThemeConstants.spacingS,
                           mainAxisSpacing: ThemeConstants.spacingS,
                         ),
-                    itemCount: appsProvider.apps.length,
-                    itemBuilder: (context, index) {
-                      final app = appsProvider.apps[index];
-                      return AppCard(app: app);
+                        itemCount: appsProvider.apps.length,
+                        itemBuilder: (context, index) {
+                          final app = appsProvider.apps[index];
+                          return AppCard(app: app, isGridView: true);
+                        },
+                      );
                     },
                   ),
                 );

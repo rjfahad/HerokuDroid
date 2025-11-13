@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:herokuandroid/core/constants/theme_constants.dart';
+import 'package:herokudroid/core/constants/theme_constants.dart';
 
 /// Skeleton loading widget for app cards
 class AppCardSkeleton extends StatelessWidget {

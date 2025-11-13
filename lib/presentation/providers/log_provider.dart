@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:herokuandroid/data/models/log_entry.dart';
-import 'package:herokuandroid/data/models/log_session.dart';
-import 'package:herokuandroid/data/repositories/log_repository.dart';
+import 'package:herokudroid/data/models/log_entry.dart';
+import 'package:herokudroid/data/models/log_session.dart';
+import 'package:herokudroid/data/repositories/log_repository.dart';
 
 /// Log connection states
 enum LogConnectionState { disconnected, connecting, connected, paused, error }

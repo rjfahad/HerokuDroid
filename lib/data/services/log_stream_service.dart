@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:herokuandroid/data/models/log_entry.dart';
+import 'package:herokudroid/data/models/log_entry.dart';
 
 /// Service for streaming logs from Heroku logplex URL
 class LogStreamService {

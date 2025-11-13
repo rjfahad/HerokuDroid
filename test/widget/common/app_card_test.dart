@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:herokuandroid/data/models/app.dart';
-import 'package:herokuandroid/presentation/widgets/common/app_card.dart';
-import 'package:herokuandroid/presentation/screens/app_details/app_details_screen.dart';
+import 'package:herokudroid/data/models/app.dart';
+import 'package:herokudroid/presentation/widgets/common/app_card.dart';
+import 'package:herokudroid/presentation/screens/app_details/app_details_screen.dart';
 
 void main() {
   group('AppCard Widget Tests', () {

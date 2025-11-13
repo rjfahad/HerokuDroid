@@ -1,6 +1,6 @@
-import 'package:herokuandroid/core/constants/api_constants.dart';
-import 'package:herokuandroid/core/errors/heroku_exception.dart';
-import 'package:herokuandroid/data/services/heroku_api_service.dart';
+import 'package:herokudroid/core/constants/api_constants.dart';
+import 'package:herokudroid/core/errors/heroku_exception.dart';
+import 'package:herokudroid/data/services/heroku_api_service.dart';
 
 /// Repository for config vars operations
 class ConfigRepository {

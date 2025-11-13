@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:herokuandroid/data/repositories/config_repository.dart';
-import 'package:herokuandroid/data/services/cache_service.dart';
+import 'package:herokudroid/data/repositories/config_repository.dart';
+import 'package:herokudroid/data/services/cache_service.dart';
 
 /// Provider for config vars state management
 class ConfigProvider extends ChangeNotifier {

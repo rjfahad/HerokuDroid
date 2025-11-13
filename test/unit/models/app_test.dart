@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:herokuandroid/data/models/app.dart';
+import 'package:herokudroid/data/models/app.dart';
 
 void main() {
   group('App', () {

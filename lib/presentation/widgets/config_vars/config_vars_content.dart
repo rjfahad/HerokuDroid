@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:herokuandroid/presentation/providers/config_provider.dart';
-import 'package:herokuandroid/presentation/widgets/common/error_widget.dart'
+import 'package:herokudroid/presentation/providers/config_provider.dart';
+import 'package:herokudroid/presentation/widgets/common/error_widget.dart'
     as custom;
-import 'package:herokuandroid/presentation/widgets/common/skeleton_widgets.dart';
+import 'package:herokudroid/presentation/widgets/common/skeleton_widgets.dart';
 
 /// Reusable widget for displaying and managing config vars
 class ConfigVarsContent extends StatefulWidget {

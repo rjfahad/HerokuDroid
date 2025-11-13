@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:herokuandroid/app.dart';
-import 'package:herokuandroid/data/repositories/app_repository.dart';
-import 'package:herokuandroid/data/repositories/auth_repository.dart';
-import 'package:herokuandroid/data/services/cache_service.dart';
-import 'package:herokuandroid/data/services/heroku_api_service.dart';
-import 'package:herokuandroid/data/services/secure_storage_service.dart';
-import 'package:herokuandroid/presentation/providers/apps_provider.dart';
-import 'package:herokuandroid/presentation/providers/auth_provider.dart';
-import 'package:herokuandroid/presentation/providers/theme_provider.dart';
+import 'package:herokudroid/app.dart';
+import 'package:herokudroid/data/repositories/app_repository.dart';
+import 'package:herokudroid/data/repositories/auth_repository.dart';
+import 'package:herokudroid/data/services/cache_service.dart';
+import 'package:herokudroid/data/services/heroku_api_service.dart';
+import 'package:herokudroid/data/services/secure_storage_service.dart';
+import 'package:herokudroid/presentation/providers/apps_provider.dart';
+import 'package:herokudroid/presentation/providers/auth_provider.dart';
+import 'package:herokudroid/presentation/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

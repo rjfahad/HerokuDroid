@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:herokuandroid/core/errors/heroku_exception.dart';
-import 'package:herokuandroid/data/repositories/auth_repository.dart';
+import 'package:herokudroid/core/errors/heroku_exception.dart';
+import 'package:herokudroid/data/repositories/auth_repository.dart';
 
 /// Provider for authentication state management
 class AuthProvider extends ChangeNotifier {

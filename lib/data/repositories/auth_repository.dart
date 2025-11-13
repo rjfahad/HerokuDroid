@@ -1,6 +1,6 @@
-import 'package:herokuandroid/core/errors/heroku_exception.dart';
-import 'package:herokuandroid/data/services/heroku_api_service.dart';
-import 'package:herokuandroid/data/services/secure_storage_service.dart';
+import 'package:herokudroid/core/errors/heroku_exception.dart';
+import 'package:herokudroid/data/services/heroku_api_service.dart';
+import 'package:herokudroid/data/services/secure_storage_service.dart';
 
 /// Repository for authentication operations
 class AuthRepository {

@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:herokuandroid/core/errors/heroku_exception.dart';
-import 'package:herokuandroid/data/models/app.dart';
-import 'package:herokuandroid/data/repositories/app_repository.dart';
-import 'package:herokuandroid/data/services/cache_service.dart';
+import 'package:herokudroid/core/errors/heroku_exception.dart';
+import 'package:herokudroid/data/models/app.dart';
+import 'package:herokudroid/data/repositories/app_repository.dart';
+import 'package:herokudroid/data/services/cache_service.dart';
 
 /// Provider for apps state management
 class AppsProvider extends ChangeNotifier {

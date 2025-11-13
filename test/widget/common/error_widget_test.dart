@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:herokuandroid/presentation/widgets/common/error_widget.dart'
+import 'package:herokudroid/presentation/widgets/common/error_widget.dart'
     as custom;
 
 void main() {

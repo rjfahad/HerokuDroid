@@ -1,9 +1,9 @@
-import 'package:herokuandroid/core/constants/api_constants.dart';
-import 'package:herokuandroid/core/errors/heroku_exception.dart';
-import 'package:herokuandroid/data/models/log_entry.dart';
-import 'package:herokuandroid/data/models/log_session.dart';
-import 'package:herokuandroid/data/services/heroku_api_service.dart';
-import 'package:herokuandroid/data/services/log_stream_service.dart';
+import 'package:herokudroid/core/constants/api_constants.dart';
+import 'package:herokudroid/core/errors/heroku_exception.dart';
+import 'package:herokudroid/data/models/log_entry.dart';
+import 'package:herokudroid/data/models/log_session.dart';
+import 'package:herokudroid/data/services/heroku_api_service.dart';
+import 'package:herokudroid/data/services/log_stream_service.dart';
 
 /// Repository for log operations
 class LogRepository {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:herokuandroid/core/constants/theme_constants.dart';
+import 'package:herokudroid/core/constants/theme_constants.dart';
 
 /// Loading widget with optional message
 class LoadingWidget extends StatelessWidget {

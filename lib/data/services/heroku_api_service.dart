@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:herokuandroid/core/constants/api_constants.dart';
-import 'package:herokuandroid/core/errors/heroku_exception.dart';
-import 'package:herokuandroid/data/services/secure_storage_service.dart';
+import 'package:herokudroid/core/constants/api_constants.dart';
+import 'package:herokudroid/core/errors/heroku_exception.dart';
+import 'package:herokudroid/data/services/secure_storage_service.dart';
 
 /// HTTP client service for Heroku Platform API
 class HerokuApiService {

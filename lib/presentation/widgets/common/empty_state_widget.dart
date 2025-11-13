@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:herokuandroid/core/constants/theme_constants.dart';
+import 'package:herokudroid/core/constants/theme_constants.dart';
 
 /// Empty state widget with icon and message
 class EmptyStateWidget extends StatelessWidget {

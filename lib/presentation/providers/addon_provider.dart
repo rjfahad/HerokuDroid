@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:herokuandroid/data/models/addon.dart';
-import 'package:herokuandroid/data/repositories/addon_repository.dart';
+import 'package:herokudroid/data/models/addon.dart';
+import 'package:herokudroid/data/repositories/addon_repository.dart';
 
 /// Provider for add-on state management
 class AddonProvider extends ChangeNotifier {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:herokuandroid/core/constants/theme_constants.dart';
-import 'package:herokuandroid/data/models/app.dart';
-import 'package:herokuandroid/data/models/release.dart';
-import 'package:herokuandroid/presentation/providers/release_provider.dart';
+import 'package:herokudroid/core/constants/theme_constants.dart';
+import 'package:herokudroid/data/models/app.dart';
+import 'package:herokudroid/data/models/release.dart';
+import 'package:herokudroid/presentation/providers/release_provider.dart';
 
 class ReleasesTab extends StatefulWidget {
   final App app;
