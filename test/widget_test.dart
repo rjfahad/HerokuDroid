@@ -3,9 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:herokudroid/app.dart';
 import 'package:herokudroid/data/repositories/app_repository.dart';
 import 'package:herokudroid/data/repositories/auth_repository.dart';
+import 'package:herokudroid/data/services/app_lock_service.dart';
 import 'package:herokudroid/data/services/cache_service.dart';
 import 'package:herokudroid/data/services/heroku_api_service.dart';
 import 'package:herokudroid/data/services/secure_storage_service.dart';
+import 'package:herokudroid/presentation/providers/app_lock_provider.dart';
 import 'package:herokudroid/presentation/providers/apps_provider.dart';
 import 'package:herokudroid/presentation/providers/auth_provider.dart';
 import 'package:herokudroid/presentation/providers/theme_provider.dart';
@@ -35,6 +37,11 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
+          ChangeNotifierProvider(
+            create: (_) => AppLockProvider(
+              service: AppLockService(storage: secureStorage),
+            ),
+          ),
           ChangeNotifierProvider(
             create: (_) => AuthProvider(repository: authRepository),
           ),

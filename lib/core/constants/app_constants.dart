@@ -8,6 +8,13 @@ class AppConstants {
 
   /// Secure storage keys
   static const String tokenKey = 'heroku_api_token';
+  static const String appLockEnabledKey = 'app_lock_enabled';
+  static const String appLockBiometricsKey = 'app_lock_biometrics_enabled';
+  static const String appLockPasswordHashKey = 'app_lock_password_hash';
+  static const String appLockPasswordSaltKey = 'app_lock_password_salt';
+
+  /// App lock
+  static const int appLockMinPasswordLength = 4;
 
   /// App version
   static const String version = '1.0.0';

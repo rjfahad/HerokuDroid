@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:herokudroid/core/theme/paper_theme.dart';
+import 'package:herokudroid/presentation/providers/app_lock_provider.dart';
 import 'package:herokudroid/presentation/providers/auth_provider.dart';
 import 'package:herokudroid/presentation/providers/theme_provider.dart';
+import 'package:herokudroid/presentation/screens/auth/lock_screen.dart';
 import 'package:herokudroid/presentation/screens/auth/login_screen.dart';
 import 'package:herokudroid/presentation/screens/dashboard/dashboard_screen.dart';
 
@@ -35,33 +37,53 @@ class AuthCheck extends StatefulWidget {
   State<AuthCheck> createState() => _AuthCheckState();
 }
 
-class _AuthCheckState extends State<AuthCheck> {
+class _AuthCheckState extends State<AuthCheck> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    // Check auth status on app start
+    WidgetsBinding.instance.addObserver(this);
+    // Check auth and load security settings on app start
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().checkAuthStatus();
+      context.read<AppLockProvider>().init();
     });
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Re-lock when the app is backgrounded so the token isn't exposed.
+    if (state == AppLifecycleState.paused) {
+      context.read<AppLockProvider>().lock();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, _) {
-        // Show loading while checking auth status
-        if (authProvider.isLoading) {
+    return Consumer2<AuthProvider, AppLockProvider>(
+      builder: (context, authProvider, lockProvider, _) {
+        // Show loading while auth/security state resolves
+        if (authProvider.isLoading || !lockProvider.isReady) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        // Navigate based on auth status
-        if (authProvider.isAuthenticated) {
-          return const DashboardScreen();
-        } else {
+        if (!authProvider.isAuthenticated) {
           return const LoginScreen();
         }
+
+        // Lock only guards a signed-in account.
+        if (lockProvider.isLocked) {
+          return const LockScreen();
+        }
+
+        return const DashboardScreen();
       },
     );
   }

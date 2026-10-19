@@ -9,11 +9,13 @@ import 'package:herokudroid/data/repositories/auth_repository.dart';
 import 'package:herokudroid/data/repositories/config_repository.dart';
 import 'package:herokudroid/data/repositories/formation_repository.dart';
 import 'package:herokudroid/data/repositories/log_repository.dart';
+import 'package:herokudroid/data/services/app_lock_service.dart';
 import 'package:herokudroid/data/services/cache_service.dart';
 import 'package:herokudroid/data/services/heroku_api_service.dart';
 import 'package:herokudroid/data/services/log_stream_service.dart';
 import 'package:herokudroid/data/services/secure_storage_service.dart';
 import 'package:herokudroid/presentation/providers/addon_provider.dart';
+import 'package:herokudroid/presentation/providers/app_lock_provider.dart';
 import 'package:herokudroid/presentation/providers/apps_provider.dart';
 import 'package:herokudroid/presentation/providers/auth_provider.dart';
 import 'package:herokudroid/presentation/providers/config_provider.dart';
@@ -30,6 +32,7 @@ void main() async {
   final apiService = HerokuApiService(secureStorage);
   final cacheService = CacheService(prefs);
   final logStreamService = LogStreamService(Dio());
+  final appLockService = AppLockService(storage: secureStorage);
 
   final authRepository = AuthRepository(
     apiService: apiService,
@@ -48,6 +51,9 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
+        ChangeNotifierProvider(
+          create: (_) => AppLockProvider(service: appLockService),
+        ),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(repository: authRepository),
         ),
