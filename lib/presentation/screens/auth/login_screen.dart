@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:herokudroid/core/theme/paper_colors.dart';
 import 'package:herokudroid/core/theme/paper_tokens.dart';
 import 'package:herokudroid/presentation/providers/auth_provider.dart';
 import 'package:herokudroid/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:herokudroid/presentation/widgets/paper/paper_components.dart';
+import 'package:herokudroid/presentation/widgets/paper/paper_snack.dart';
 
 /// Login screen — Design B (Paper).
 class LoginScreen extends StatefulWidget {
@@ -186,8 +188,29 @@ class _LoginScreenState extends State<LoginScreen> {
             'Stored only in your device keychain.',
             style: PaperText.bodySmall.copyWith(color: c.muted),
           ),
+          const SizedBox(height: PaperTokens.m),
+          PaperButton(
+            label: 'Open Heroku account',
+            variant: PaperButtonVariant.outline,
+            size: PaperButtonSize.small,
+            icon: Icons.open_in_new,
+            onPressed: _openHerokuAccount,
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _openHerokuAccount() async {
+    final uri = Uri.parse('https://dashboard.heroku.com/account');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (mounted) {
+        PaperSnack.error(context, 'Could not open $uri');
+      }
+    } catch (e) {
+      if (mounted) PaperSnack.error(context, 'Failed to open: $e');
+    }
   }
 }
