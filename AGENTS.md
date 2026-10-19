@@ -84,6 +84,19 @@ Loading uses `skeletonizer`; lists use `RefreshIndicator`.
   (verify with `git check-ignore`). Release signing falls back to debug keys when
   `key.properties` is absent, so `flutter run --release` still works locally.
 
+## In-app updates
+
+`UpdateService` fetches `version.txt` from the default branch via
+raw.githubusercontent (`UpdateConstants.manifestUrl`) and compares it with the
+installed version read from `package_info_plus`. `UpdateProvider` checks on
+launch (silent) and from Settings; the launch dialog is suppressed per version
+via the `dismissed_update_version` pref, and the "Update" button opens the
+manifest's download URL (falling back to the releases page).
+
+**On release, bump `version.txt`** (line 1 = version, optional line 2 = download
+URL, remaining lines = notes). `pubspec.yaml` version and that file are separate
+sources of truth — update both.
+
 ## Legal pages
 
 `docs/` is a GitHub Pages (Jekyll) site with `privacy`/`terms`. The app opens

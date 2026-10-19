@@ -11,8 +11,10 @@ import '../../../data/services/cache_service.dart';
 import '../../providers/app_lock_provider.dart';
 import '../../providers/apps_provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../providers/update_provider.dart';
 import '../../widgets/paper/paper_components.dart';
 import '../../widgets/paper/paper_snack.dart';
+import '../../widgets/update/update_dialog.dart';
 
 /// Settings screen for app preferences.
 class SettingsScreen extends StatelessWidget {
@@ -40,6 +42,8 @@ class SettingsScreen extends StatelessWidget {
           _CacheSection(),
           SizedBox(height: PaperTokens.m),
           _AboutSection(),
+          SizedBox(height: PaperTokens.m),
+          _UpdatesSection(),
           SizedBox(height: PaperTokens.m),
           _LegalSection(),
         ],
@@ -448,6 +452,91 @@ class _AboutSection extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _UpdatesSection extends StatelessWidget {
+  const _UpdatesSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.paper;
+    return Consumer<UpdateProvider>(
+      builder: (context, updater, _) {
+        final update = updater.availableUpdate;
+        final version = updater.currentVersion.isEmpty
+            ? AppConstants.version
+            : updater.currentVersion;
+
+        return _SectionCard(
+          caption: 'Updates',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'HerokuDroid $version',
+                style: PaperText.label.copyWith(color: c.ink),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                update != null
+                    ? 'Version ${update.version} is available'
+                    : "You're on the latest version",
+                style: PaperText.bodySmall.copyWith(
+                  color: update != null ? c.accent : c.muted,
+                ),
+              ),
+              if (updater.error != null) ...[
+                const SizedBox(height: PaperTokens.s),
+                Text(
+                  updater.error!,
+                  style: PaperText.bodySmall.copyWith(color: c.error),
+                ),
+              ],
+              const SizedBox(height: PaperTokens.m),
+              Row(
+                children: [
+                  PaperButton(
+                    label: 'Check for updates',
+                    variant: PaperButtonVariant.outline,
+                    size: PaperButtonSize.small,
+                    icon: Icons.refresh,
+                    loading: updater.isChecking,
+                    onPressed: () => _checkForUpdates(context, updater),
+                  ),
+                  if (update != null) ...[
+                    const SizedBox(width: PaperTokens.s),
+                    PaperButton(
+                      label: 'Update',
+                      variant: PaperButtonVariant.accent,
+                      size: PaperButtonSize.small,
+                      icon: Icons.system_update_alt,
+                      onPressed: () => showUpdateDialog(context, update),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+Future<void> _checkForUpdates(
+  BuildContext context,
+  UpdateProvider updater,
+) async {
+  final found = await updater.checkForUpdates();
+  if (!context.mounted) return;
+
+  if (updater.error != null) {
+    PaperSnack.error(context, updater.error!);
+  } else if (found) {
+    await showUpdateDialog(context, updater.availableUpdate!);
+  } else {
+    PaperSnack.success(context, "You're on the latest version");
   }
 }
 

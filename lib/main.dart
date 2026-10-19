@@ -14,6 +14,7 @@ import 'package:herokudroid/data/services/cache_service.dart';
 import 'package:herokudroid/data/services/heroku_api_service.dart';
 import 'package:herokudroid/data/services/log_stream_service.dart';
 import 'package:herokudroid/data/services/secure_storage_service.dart';
+import 'package:herokudroid/data/services/update_service.dart';
 import 'package:herokudroid/presentation/providers/addon_provider.dart';
 import 'package:herokudroid/presentation/providers/app_lock_provider.dart';
 import 'package:herokudroid/presentation/providers/apps_provider.dart';
@@ -23,6 +24,7 @@ import 'package:herokudroid/presentation/providers/dyno_provider.dart';
 import 'package:herokudroid/presentation/providers/log_provider.dart';
 import 'package:herokudroid/presentation/providers/release_provider.dart';
 import 'package:herokudroid/presentation/providers/theme_provider.dart';
+import 'package:herokudroid/presentation/providers/update_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +35,7 @@ void main() async {
   final cacheService = CacheService(prefs);
   final logStreamService = LogStreamService(Dio());
   final appLockService = AppLockService(storage: secureStorage);
+  final updateService = UpdateService();
 
   final authRepository = AuthRepository(
     apiService: apiService,
@@ -51,6 +54,9 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
+        ChangeNotifierProvider(
+          create: (_) => UpdateProvider(service: updateService, prefs: prefs),
+        ),
         ChangeNotifierProvider(
           create: (_) => AppLockProvider(service: appLockService),
         ),

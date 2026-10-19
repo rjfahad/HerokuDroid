@@ -1,0 +1,9 @@
+# HerokuDroid in-app update manifest.
+#
+# The app fetches this file from the default branch via raw.githubusercontent.com.
+#   * first non-comment line: the latest version (e.g. 1.2.0)
+#   * optional next line: download URL opened by the "Update" button
+#   * any remaining lines: release notes shown in the dialog
+# Blank lines and lines beginning with # are ignored.
+1.0.0
+https://github.com/rjfahad/HerokuDroid/releases/latest

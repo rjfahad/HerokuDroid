@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:herokudroid/app.dart';
+import 'package:herokudroid/data/models/app_update.dart';
 import 'package:herokudroid/data/repositories/app_repository.dart';
 import 'package:herokudroid/data/repositories/auth_repository.dart';
 import 'package:herokudroid/data/services/app_lock_service.dart';
 import 'package:herokudroid/data/services/cache_service.dart';
 import 'package:herokudroid/data/services/heroku_api_service.dart';
 import 'package:herokudroid/data/services/secure_storage_service.dart';
+import 'package:herokudroid/data/services/update_service.dart';
 import 'package:herokudroid/presentation/providers/app_lock_provider.dart';
 import 'package:herokudroid/presentation/providers/apps_provider.dart';
 import 'package:herokudroid/presentation/providers/auth_provider.dart';
 import 'package:herokudroid/presentation/providers/theme_provider.dart';
+import 'package:herokudroid/presentation/providers/update_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// Update checks are disabled in the smoke test by returning no manifest.
+class _NoUpdateService extends UpdateService {
+  @override
+  Future<AppUpdate?> fetchLatest() async => null;
+}
 
 void main() {
   testWidgets('HerokuDroid app smoke test', (WidgetTester tester) async {
@@ -37,6 +46,10 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
+          ChangeNotifierProvider(
+            create: (_) =>
+                UpdateProvider(service: _NoUpdateService(), prefs: prefs),
+          ),
           ChangeNotifierProvider(
             create: (_) => AppLockProvider(
               service: AppLockService(storage: secureStorage),

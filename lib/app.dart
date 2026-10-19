@@ -4,9 +4,11 @@ import 'package:herokudroid/core/theme/paper_theme.dart';
 import 'package:herokudroid/presentation/providers/app_lock_provider.dart';
 import 'package:herokudroid/presentation/providers/auth_provider.dart';
 import 'package:herokudroid/presentation/providers/theme_provider.dart';
+import 'package:herokudroid/presentation/providers/update_provider.dart';
 import 'package:herokudroid/presentation/screens/auth/lock_screen.dart';
 import 'package:herokudroid/presentation/screens/auth/login_screen.dart';
 import 'package:herokudroid/presentation/screens/dashboard/dashboard_screen.dart';
+import 'package:herokudroid/presentation/widgets/update/update_dialog.dart';
 
 /// Root app widget
 class HerokuDroidApp extends StatelessWidget {
@@ -42,11 +44,21 @@ class _AuthCheckState extends State<AuthCheck> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Check auth and load security settings on app start
+    // Check auth, load security settings, and look for updates on app start
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().checkAuthStatus();
       context.read<AppLockProvider>().init();
+      _checkForUpdates();
     });
+  }
+
+  Future<void> _checkForUpdates() async {
+    final updater = context.read<UpdateProvider>();
+    await updater.checkForUpdates(silent: true);
+    if (!mounted || !updater.shouldPrompt) return;
+
+    final updated = await showUpdateDialog(context, updater.availableUpdate!);
+    if (!updated) await updater.dismissPrompt();
   }
 
   @override
