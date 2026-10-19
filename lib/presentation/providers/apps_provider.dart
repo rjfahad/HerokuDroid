@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:herokudroid/core/errors/heroku_exception.dart';
 import 'package:herokudroid/data/models/app.dart';
 import 'package:herokudroid/data/repositories/app_repository.dart';
@@ -8,17 +9,38 @@ import 'package:herokudroid/data/services/cache_service.dart';
 class AppsProvider extends ChangeNotifier {
   final AppRepository _repository;
   final CacheService _cacheService;
+  final SharedPreferences _prefs;
 
   AppsProvider({
     required AppRepository repository,
     required CacheService cacheService,
+    required SharedPreferences prefs,
   }) : _repository = repository,
-       _cacheService = cacheService;
+       _cacheService = cacheService,
+       _prefs = prefs {
+    _showLiveStatus = _prefs.getBool(_liveStatusKey) ?? true;
+  }
+
+  /// Above this many apps we stop eagerly enriching every card and instead
+  /// fetch status lazily for the cards that are actually rendered.
+  static const int autoEnrichLimit = 40;
+
+  /// Max simultaneous formation requests.
+  static const int _enrichConcurrency = 6;
+
+  /// How long a per-app dyno summary is considered fresh.
+  static const Duration _summaryTtl = Duration(seconds: 90);
+
+  static const String _liveStatusKey = 'show_live_status';
 
   List<App> _apps = [];
   bool _isLoading = false;
   String? _error;
   String _searchQuery = '';
+  bool _showLiveStatus = true;
+
+  final Map<String, _DynoSummary> _summaryCache = {};
+  final Set<String> _inFlight = {};
 
   List<App> get apps => _filteredApps;
   List<App> get allApps => _apps;
@@ -26,6 +48,7 @@ class AppsProvider extends ChangeNotifier {
   String? get error => _error;
   String get searchQuery => _searchQuery;
   bool get hasApps => _apps.isNotEmpty;
+  bool get showLiveStatus => _showLiveStatus;
 
   /// Get filtered apps based on search query
   List<App> get _filteredApps {
@@ -43,6 +66,11 @@ class AppsProvider extends ChangeNotifier {
 
   /// Load all apps
   Future<void> loadApps({bool forceRefresh = false}) async {
+    if (forceRefresh) {
+      // Drop freshness so status is refetched.
+      _summaryCache.clear();
+    }
+
     // Try to load from cache first if not forcing refresh
     if (!forceRefresh) {
       final cachedApps = _cacheService.getCachedApps();
@@ -85,6 +113,111 @@ class AppsProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+
+    // Derive per-app status from the dyno formation in the background.
+    await _enrichDynoInfo();
+  }
+
+  /// Attach per-app dyno summaries so the dashboard can show real
+  /// running/stopped status.
+  ///
+  /// For large accounts we skip the eager pass entirely and let
+  /// [requestEnrichment] fetch status lazily for rendered cards.
+  Future<void> _enrichDynoInfo() async {
+    if (!_showLiveStatus || _apps.isEmpty) return;
+    if (_apps.length > autoEnrichLimit) return;
+
+    final stale = _apps.where(_needsSummary).toList();
+    if (stale.isEmpty) return;
+
+    await _forEachConcurrent(stale, _enrichConcurrency, _refreshSummary);
+
+    await _cacheService.cacheApps(_apps);
+    notifyListeners();
+  }
+
+  /// Fetch status for a single app if it isn't fresh. Safe to call from
+  /// an `itemBuilder`; duplicate calls are coalesced.
+  Future<void> requestEnrichment(String appId) async {
+    if (!_showLiveStatus) return;
+    if (_inFlight.contains(appId)) return;
+
+    final index = _apps.indexWhere((a) => a.id == appId);
+    if (index == -1) return;
+    if (!_needsSummary(_apps[index])) return;
+
+    await _refreshSummary(_apps[index]);
+    await _cacheService.cacheApps(_apps);
+    notifyListeners();
+  }
+
+  bool _needsSummary(App app) {
+    final summary = _summaryCache[app.id];
+    if (summary == null) return true;
+    return DateTime.now().millisecondsSinceEpoch - summary.fetchedAtMs >
+        _summaryTtl.inMilliseconds;
+  }
+
+  /// Fetch and store a single app's dyno summary. Keeps the last known value
+  /// on failure (#5) and records freshness so it isn't hammered.
+  Future<void> _refreshSummary(App app) async {
+    if (!_inFlight.add(app.id)) return;
+    try {
+      final formation = await _repository.getFormation(app.id);
+      final total = formation.fold<int>(0, (sum, f) => sum + f.quantity);
+      final running = formation
+          .where((f) => f.isScaled)
+          .fold<int>(0, (sum, f) => sum + f.quantity);
+
+      _summaryCache[app.id] = _DynoSummary(
+        total: total,
+        running: running,
+        fetchedAtMs: DateTime.now().millisecondsSinceEpoch,
+      );
+
+      final index = _apps.indexWhere((a) => a.id == app.id);
+      if (index != -1) {
+        _apps[index] = _apps[index].copyWith(
+          totalDynos: total,
+          runningDynos: running,
+        );
+      }
+    } catch (_) {
+      // Keep the previous, possibly cached, summary.
+    } finally {
+      _inFlight.remove(app.id);
+    }
+  }
+
+  /// Runs [action] over [items] with at most [limit] in flight at once.
+  Future<void> _forEachConcurrent<T>(
+    List<T> items,
+    int limit,
+    Future<void> Function(T item) action,
+  ) async {
+    if (items.isEmpty) return;
+    final queue = List<T>.from(items);
+    final workers = limit.clamp(1, queue.length);
+
+    Future<void> run() async {
+      while (queue.isNotEmpty) {
+        final item = queue.removeAt(0);
+        await action(item);
+      }
+    }
+
+    await Future.wait(List.generate(workers, (_) => run()));
+  }
+
+  /// Enable/disable live app-status enrichment and persist the choice.
+  Future<void> setShowLiveStatus(bool value) async {
+    _showLiveStatus = value;
+    await _prefs.setBool(_liveStatusKey, value);
+    notifyListeners();
+
+    if (value) {
+      await _enrichDynoInfo();
     }
   }
 
@@ -215,4 +348,17 @@ class AppsProvider extends ChangeNotifier {
       return false;
     }
   }
+}
+
+/// Cached dyno summary for a single app.
+class _DynoSummary {
+  const _DynoSummary({
+    required this.total,
+    required this.running,
+    required this.fetchedAtMs,
+  });
+
+  final int total;
+  final int running;
+  final int fetchedAtMs;
 }

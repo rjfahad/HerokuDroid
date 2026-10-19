@@ -11,7 +11,6 @@ class SecureStorageService {
 
   /// FlutterSecureStorage instance with platform-specific options
   final FlutterSecureStorage _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
 

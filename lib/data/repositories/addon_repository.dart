@@ -44,4 +44,18 @@ class AddonRepository {
       );
     }
   }
+
+  /// Remove (deprovision) an add-on
+  Future<void> deleteAddon(String appId, String addonId) async {
+    try {
+      await _apiService.delete(ApiConstants.addon(appId, addonId));
+    } on HerokuException {
+      rethrow;
+    } catch (e) {
+      throw HerokuException(
+        message: 'Failed to remove add-on',
+        originalError: e,
+      );
+    }
+  }
 }

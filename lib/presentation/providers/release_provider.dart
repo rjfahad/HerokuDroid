@@ -76,6 +76,29 @@ class ReleaseProvider extends ChangeNotifier {
     await loadReleases(appId);
   }
 
+  /// Roll back to a previous release, then reload the deploy history
+  Future<bool> rollbackRelease(String appId, String releaseId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _repository.rollbackRelease(appId, releaseId);
+      await _loadReleasesFromNetwork(appId);
+      return true;
+    } on HerokuException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = 'Failed to roll back: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Clear error message
   void clearError() {
     _error = null;

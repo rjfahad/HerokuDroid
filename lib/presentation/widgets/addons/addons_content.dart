@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'package:herokudroid/core/theme/paper_colors.dart';
+import 'package:herokudroid/core/theme/paper_tokens.dart';
 import 'package:herokudroid/data/models/addon.dart';
 import 'package:herokudroid/presentation/providers/addon_provider.dart';
-import 'package:herokudroid/presentation/widgets/common/error_widget.dart'
-    as custom;
-import 'package:herokudroid/presentation/widgets/common/skeleton_widgets.dart';
+import 'package:herokudroid/presentation/widgets/paper/paper_components.dart';
+import 'package:herokudroid/presentation/widgets/paper/paper_snack.dart';
+import 'package:herokudroid/presentation/widgets/paper/paper_states.dart';
 
-/// Reusable widget for displaying add-ons
+/// Reusable widget for displaying add-ons.
 class AddonsContent extends StatefulWidget {
   final String appId;
 
@@ -19,8 +21,6 @@ class AddonsContent extends StatefulWidget {
 }
 
 class _AddonsContentState extends State<AddonsContent> {
-  late ScaffoldMessengerState _scaffoldMessenger;
-
   @override
   void initState() {
     super.initState();
@@ -29,26 +29,9 @@ class _AddonsContentState extends State<AddonsContent> {
     });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _scaffoldMessenger = ScaffoldMessenger.of(context);
-  }
-
   Future<void> _openDashboard(String? webUrl) async {
     if (webUrl == null || webUrl.isEmpty) {
-      if (mounted) {
-        try {
-          _scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Dashboard URL not available'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        } catch (e) {
-          // Ignore if widget is disposed
-        }
-      }
+      PaperSnack.warning(context, 'Dashboard URL not available');
       return;
     }
 
@@ -56,82 +39,124 @@ class _AddonsContentState extends State<AddonsContent> {
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        throw 'Could not launch $webUrl';
+      } else if (mounted) {
+        PaperSnack.error(context, 'Could not open $webUrl');
       }
     } catch (e) {
-      if (mounted) {
-        try {
-          _scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text('Failed to open dashboard: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        } catch (e) {
-          // Ignore if widget is disposed
-        }
-      }
+      if (mounted) PaperSnack.error(context, 'Failed to open: $e');
     }
+  }
+
+  Future<void> _confirmRemove(Addon addon) async {
+    final confirmController = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final matches = confirmController.text.trim() == addon.name;
+          return AlertDialog(
+            title: Text(
+              'Remove ${addon.name}?',
+              style: TextStyle(color: context.paper.error, fontSize: 18),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Data is deleted permanently. Type the name to confirm.',
+                  style: PaperText.bodySmall.copyWith(
+                    color: context.paper.muted,
+                  ),
+                ),
+                const SizedBox(height: PaperTokens.m),
+                TextField(
+                  controller: confirmController,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  decoration: InputDecoration(hintText: addon.name),
+                  onChanged: (_) => setDialogState(() {}),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: context.paper.error,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: matches
+                    ? () => Navigator.of(dialogContext).pop(true)
+                    : null,
+                child: const Text('Remove'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    confirmController.dispose();
+    if (confirmed != true || !mounted) return;
+
+    final provider = context.read<AddonProvider>();
+    final success = await provider.removeAddon(widget.appId, addon.id);
+    if (!mounted) return;
+    PaperSnack.show(
+      context,
+      success ? 'Removed ${addon.name}' : provider.error ?? 'Failed to remove',
+      variant: success ? PaperSnackVariant.success : PaperSnackVariant.error,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AddonProvider>();
-    return _buildContent(provider);
-  }
 
-  Widget _buildContent(AddonProvider provider) {
-    if (provider.isLoading) {
-      // Show shimmer loading effect
-      return Skeletonizer(
-        enabled: true,
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: 4,
-          itemBuilder: (context, index) => const AddonSkeleton(),
-        ),
-      );
+    if (provider.isLoading && provider.addons.isEmpty) {
+      return const PaperLoadingState(message: 'Loading add-ons…');
     }
 
-    if (provider.error != null) {
-      return custom.ErrorWidget(
+    if (provider.error != null && provider.addons.isEmpty) {
+      return PaperErrorState(
         message: provider.error!,
         onRetry: () => provider.loadAddons(widget.appId),
       );
     }
 
     if (provider.addons.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.extension_outlined, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'No add-ons installed',
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add-ons extend your app\'s capabilities',
-              style: TextStyle(color: Colors.grey[500]),
-            ),
-          ],
-        ),
+      return const PaperEmptyState(
+        icon: Icons.extension_outlined,
+        title: 'No add-ons',
+        message: 'Add-ons you provision for this app will appear here.',
       );
     }
 
     return RefreshIndicator(
       onRefresh: () => provider.loadAddons(widget.appId),
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(
+          PaperTokens.l,
+          PaperTokens.s,
+          PaperTokens.l,
+          PaperTokens.xl,
+        ),
+        physics: const AlwaysScrollableScrollPhysics(),
         itemCount: provider.addons.length,
         itemBuilder: (context, index) {
           final addon = provider.addons[index];
-          return AddonCard(
-            addon: addon,
-            onTap: () => _openDashboard(addon.webUrl),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: PaperTokens.s),
+            child: _AddonCard(
+              addon: addon,
+              onOpen: () => _openDashboard(addon.webUrl),
+              onRemove: () => _confirmRemove(addon),
+            ),
           );
         },
       ),
@@ -139,251 +164,147 @@ class _AddonsContentState extends State<AddonsContent> {
   }
 }
 
-/// Widget for displaying a single add-on card
-class AddonCard extends StatelessWidget {
+class _AddonCard extends StatelessWidget {
+  const _AddonCard({
+    required this.addon,
+    required this.onOpen,
+    required this.onRemove,
+  });
+
   final Addon addon;
-  final VoidCallback onTap;
+  final VoidCallback onOpen;
+  final VoidCallback onRemove;
 
-  const AddonCard({required this.addon, required this.onTap, super.key});
-
-  Color _getStateColor(String state) {
+  (PaperTagVariant, String) _stateTag(String state) {
     switch (state.toLowerCase()) {
       case 'provisioned':
-        return Colors.green;
+        return (PaperTagVariant.success, 'provisioned');
       case 'provisioning':
-        return Colors.orange;
+        return (PaperTagVariant.warning, 'provisioning');
       case 'deprovisioned':
-        return Colors.grey;
+        return (PaperTagVariant.error, 'deprovisioned');
       default:
-        return Colors.grey;
+        return (PaperTagVariant.neutral, state);
     }
   }
 
-  IconData _getServiceIcon(String serviceName) {
-    if (serviceName.contains('postgres')) {
-      return Icons.storage;
-    } else if (serviceName.contains('redis')) {
-      return Icons.memory;
-    } else if (serviceName.contains('mongo')) {
-      return Icons.data_object;
-    } else if (serviceName.contains('cloudinary')) {
-      return Icons.image;
-    } else if (serviceName.contains('sendgrid')) {
-      return Icons.email;
-    } else {
-      return Icons.extension;
+  String _serviceTitle(String serviceName) {
+    if (serviceName.toLowerCase() == 'heroku-postgresql') {
+      return 'Heroku Postgres';
     }
-  }
-
-  String _formatServiceName(String serviceName) {
-    // Convert "heroku-postgresql" to "Heroku PostgreSQL"
     return serviceName
         .split('-')
-        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .where((w) => w.isNotEmpty)
+        .map((w) => w[0].toUpperCase() + w.substring(1))
         .join(' ');
   }
 
-  String _formatPlanName(String planName) {
-    // Extract plan tier from "heroku-postgresql:hobby-dev"
+  String _planLabel(String planName) {
     final parts = planName.split(':');
-    if (parts.length > 1) {
-      return parts[1]
-          .split('-')
-          .map((word) => word[0].toUpperCase() + word.substring(1))
-          .join(' ');
-    }
-    return planName;
+    final plan = parts.length > 1 ? parts[1] : planName;
+    return plan
+        .split('-')
+        .where((w) => w.isNotEmpty)
+        .map((w) => w[0].toUpperCase() + w.substring(1))
+        .join(' ');
   }
 
-  String _getPricing(String planName) {
-    // Determine pricing based on plan name (placeholder logic)
-    final lowerPlan = planName.toLowerCase();
-    if (lowerPlan.contains('free') || lowerPlan.contains('hobby-dev')) {
-      return 'FREE';
-    } else if (lowerPlan.contains('hobby-basic') ||
-        lowerPlan.contains('mini')) {
-      return '\$7.00/month';
-    } else if (lowerPlan.contains('essential') ||
-        lowerPlan.contains('standard')) {
-      return '\$50.00/month';
-    } else if (lowerPlan.contains('premium')) {
-      return '\$15.00/month';
-    } else {
-      return 'See dashboard';
-    }
-  }
-
-  String _getMetrics(String serviceName, String planName) {
-    // Provide sample metrics based on service (placeholder data)
-    final lowerService = serviceName.toLowerCase();
-    if (lowerService.contains('postgres')) {
-      return '10GB storage • 20 connections';
-    } else if (lowerService.contains('redis')) {
-      return '25MB memory • 40 connections';
-    } else if (lowerService.contains('papertrail')) {
-      return '50MB/day • 7 days retention';
-    } else {
-      return 'View dashboard for details';
-    }
+  String _pricing(String planName) {
+    final p = planName.toLowerCase();
+    if (p.contains('free') || p.contains('hobby-dev')) return 'free';
+    if (p.contains('mini') || p.contains('hobby-basic')) return '~\$7/mo';
+    if (p.contains('essential')) return '~\$5/mo';
+    if (p.contains('standard')) return '~\$50/mo';
+    if (p.contains('premium')) return '~\$15/mo';
+    return 'see dashboard';
   }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+    final c = context.paper;
+    final (variant, label) = _stateTag(addon.state);
+
+    return PaperCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with icon and service name
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.purple.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _serviceTitle(addon.serviceName),
+                      style: PaperText.h2.copyWith(color: c.ink),
                     ),
-                    child: Icon(
-                      _getServiceIcon(addon.serviceName),
-                      color: Colors.purple,
+                    const SizedBox(height: 2),
+                    Text(
+                      addon.name,
+                      style: PaperText.mono.copyWith(color: c.muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _formatServiceName(addon.serviceName),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          addon.name,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                            fontFamily: 'monospace',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // State indicator
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStateColor(addon.state).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: _getStateColor(addon.state)),
-                    ),
-                    child: Text(
-                      addon.state,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: _getStateColor(addon.state),
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              // Plan info and pricing
-              Row(
-                children: [
-                  Icon(Icons.label, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _formatPlanName(addon.planName),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      _getPricing(addon.planName),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ),
-                ],
+              const SizedBox(width: PaperTokens.s),
+              PaperTag(label: label, variant: variant),
+            ],
+          ),
+          const SizedBox(height: PaperTokens.m),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${_planLabel(addon.planName)} · ${_pricing(addon.planName)}',
+                  style: PaperText.bodySmall.copyWith(color: c.muted),
+                ),
               ),
-              const SizedBox(height: 12),
-              // Metrics
-              Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _getMetrics(addon.serviceName, addon.planName),
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                    ),
+              if (addon.createdAt != null)
+                Text(
+                  _timeAgo(addon.createdAt!),
+                  style: PaperText.bodySmall.copyWith(color: c.muted),
+                ),
+            ],
+          ),
+          const SizedBox(height: PaperTokens.m),
+          Row(
+            children: [
+              if (addon.webUrl != null && addon.webUrl!.isNotEmpty) ...[
+                Expanded(
+                  child: PaperButton(
+                    label: 'Open dashboard',
+                    variant: PaperButtonVariant.outline,
+                    size: PaperButtonSize.small,
+                    icon: Icons.open_in_new,
+                    onPressed: onOpen,
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              // Action buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (addon.webUrl != null && addon.webUrl!.isNotEmpty)
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: onTap,
-                        icon: const Icon(Icons.open_in_browser, size: 18),
-                        label: const Text('Open Dashboard'),
-                      ),
-                    ),
-                  const SizedBox(width: 8),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      // TODO: Implement remove addon
-                    },
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text('Remove'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
-                  ),
-                ],
+                ),
+                const SizedBox(width: PaperTokens.s),
+              ],
+              Expanded(
+                child: PaperButton(
+                  label: 'Remove',
+                  variant: PaperButtonVariant.destructive,
+                  size: PaperButtonSize.small,
+                  icon: Icons.delete_outline,
+                  onPressed: onRemove,
+                ),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
+  }
+
+  String _timeAgo(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inDays >= 30) return '${(diff.inDays / 30).floor()}mo ago';
+    if (diff.inDays > 0) return '${diff.inDays}d ago';
+    if (diff.inHours > 0) return '${diff.inHours}h ago';
+    return 'just now';
   }
 }

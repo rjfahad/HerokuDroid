@@ -42,6 +42,7 @@ void main() {
             create: (_) => AppsProvider(
               repository: appRepository,
               cacheService: cacheService,
+              prefs: prefs,
             ),
           ),
         ],

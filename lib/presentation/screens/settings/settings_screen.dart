@@ -1,162 +1,270 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:herokudroid/core/constants/theme_constants.dart';
-import 'package:herokudroid/data/services/cache_service.dart';
-import 'package:herokudroid/presentation/providers/theme_provider.dart';
 
-/// Settings screen for app preferences
+import '../../../core/theme/paper_colors.dart';
+import '../../../core/theme/paper_tokens.dart';
+import '../../../data/services/cache_service.dart';
+import '../../providers/apps_provider.dart';
+import '../../providers/theme_provider.dart';
+import '../../widgets/paper/paper_components.dart';
+import '../../widgets/paper/paper_snack.dart';
+
+/// Settings screen for app preferences.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      backgroundColor: context.paper.background,
+      appBar: AppBar(centerTitle: true, title: const Text('Settings')),
       body: ListView(
-        children: [
-          _buildAppearanceSection(context),
-          const Divider(),
-          _buildCacheSection(context),
-          const Divider(),
-          _buildAboutSection(context),
+        padding: const EdgeInsets.fromLTRB(
+          PaperTokens.l,
+          PaperTokens.s,
+          PaperTokens.l,
+          PaperTokens.xl,
+        ),
+        children: const [
+          _AppearanceSection(),
+          SizedBox(height: PaperTokens.m),
+          _DashboardSection(),
+          SizedBox(height: PaperTokens.m),
+          _CacheSection(),
+          SizedBox(height: PaperTokens.m),
+          _AboutSection(),
         ],
       ),
     );
   }
+}
 
-  Widget _buildAppearanceSection(BuildContext context) {
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.caption,
+    required this.child,
+  });
+
+  final String caption;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return PaperCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          PaperCaption(caption),
+          const SizedBox(height: PaperTokens.m),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _AppearanceSection extends StatelessWidget {
+  const _AppearanceSection();
+
+  @override
+  Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(ThemeConstants.spacingM),
-              child: Text(
-                'Appearance',
-                style: ThemeConstants.headingSmall.copyWith(
-                  color: ThemeConstants.primaryAccent,
-                ),
-              ),
-            ),
-            RadioListTile<ThemeMode>(
-              title: const Text('Dark Theme'),
-              subtitle: const Text('Use dark theme'),
-              value: ThemeMode.dark,
-              groupValue: themeProvider.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  themeProvider.setThemeMode(value);
-                }
-              },
-              secondary: const Icon(Icons.dark_mode),
-            ),
-            RadioListTile<ThemeMode>(
-              title: const Text('System Default'),
-              subtitle: const Text('Follow system theme'),
-              value: ThemeMode.system,
-              groupValue: themeProvider.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  themeProvider.setThemeMode(value);
-                }
-              },
-              secondary: const Icon(Icons.settings_system_daydream),
-            ),
-          ],
+        const modes = [ThemeMode.light, ThemeMode.system, ThemeMode.dark];
+        final index = modes.indexOf(themeProvider.themeMode).clamp(0, 2);
+        return _SectionCard(
+          caption: 'Appearance',
+          child: _SegmentedControl(
+            labels: const ['Light', 'System', 'Dark'],
+            selectedIndex: index,
+            onSelected: (i) => themeProvider.setThemeMode(modes[i]),
+          ),
         );
       },
     );
   }
+}
 
-  Widget _buildCacheSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(ThemeConstants.spacingM),
-          child: Text(
-            'Cache',
-            style: ThemeConstants.headingSmall.copyWith(
-              color: ThemeConstants.primaryAccent,
-            ),
+class _DashboardSection extends StatelessWidget {
+  const _DashboardSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.paper;
+    return Consumer<AppsProvider>(
+      builder: (context, appsProvider, _) {
+        return _SectionCard(
+          caption: 'Dashboard',
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Live app status',
+                      style: PaperText.label.copyWith(color: c.ink),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Show running/stopped per app (extra requests)',
+                      style: PaperText.bodySmall.copyWith(color: c.muted),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: PaperTokens.s),
+              Switch(
+                value: appsProvider.showLiveStatus,
+                onChanged: appsProvider.setShowLiveStatus,
+              ),
+            ],
           ),
-        ),
-        ListTile(
-          title: const Text('Clear Cache'),
-          subtitle: const Text('Remove cached app data'),
-          leading: const Icon(Icons.delete_sweep),
-          onTap: () => _showClearCacheDialog(context),
-        ),
-      ],
+        );
+      },
     );
   }
+}
 
-  void _showClearCacheDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear Cache?'),
-        content: const Text(
-          'This will remove all cached app data. Your apps will be reloaded from the server.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+class _CacheSection extends StatelessWidget {
+  const _CacheSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.paper;
+    return _SectionCard(
+      caption: 'Cache',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Cached app data makes launches faster.',
+            style: PaperText.bodySmall.copyWith(color: c.muted),
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-
-              // Get CacheService from main.dart dependencies
-              final cacheService = CacheService(
-                await SharedPreferences.getInstance(),
-              );
-
-              await cacheService.clearAllCache();
-
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Cache cleared successfully'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              }
-            },
-            child: const Text('Clear'),
+          const SizedBox(height: PaperTokens.m),
+          PaperButton(
+            label: 'Clear cache',
+            variant: PaperButtonVariant.destructive,
+            icon: Icons.delete_sweep_outlined,
+            onPressed: () => _confirmClearCache(context),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildAboutSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(ThemeConstants.spacingM),
-          child: Text(
-            'About',
-            style: ThemeConstants.headingSmall.copyWith(
-              color: ThemeConstants.primaryAccent,
-            ),
+class _AboutSection extends StatelessWidget {
+  const _AboutSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.paper;
+    return _SectionCard(
+      caption: 'About',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'HerokuDroid',
+            style: PaperText.h2.copyWith(color: c.ink),
           ),
-        ),
-        ListTile(
-          title: const Text('Version'),
-          subtitle: const Text('1.0.0'),
-          leading: const Icon(Icons.info_outline),
-        ),
-        ListTile(
-          title: const Text('HerokuDroid'),
-          subtitle: const Text('Manage your Heroku apps with ease'),
-          leading: const Icon(Icons.cloud),
-        ),
-      ],
+          const SizedBox(height: 2),
+          Text(
+            'Version 1.0.0 · Heroku in your pocket',
+            style: PaperText.bodySmall.copyWith(color: c.muted),
+          ),
+        ],
+      ),
     );
   }
+}
+
+class _SegmentedControl extends StatelessWidget {
+  const _SegmentedControl({
+    required this.labels,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<String> labels;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.paper;
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(PaperTokens.rPill),
+        border: Border.all(color: c.line),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < labels.length; i++)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onSelected(i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  decoration: BoxDecoration(
+                    color: i == selectedIndex ? c.ink : Colors.transparent,
+                    borderRadius: BorderRadius.circular(PaperTokens.rPill),
+                  ),
+                  child: Text(
+                    labels[i],
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: i == selectedIndex
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: i == selectedIndex ? c.background : c.muted,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> _confirmClearCache(BuildContext context) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Clear cache?'),
+      content: const Text(
+        'This removes all cached app data. Your apps will be reloaded from the server.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: context.paper.error,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Clear'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true || !context.mounted) return;
+
+  final cacheService = CacheService(await SharedPreferences.getInstance());
+  await cacheService.clearAllCache();
+
+  if (!context.mounted) return;
+  PaperSnack.success(context, 'Cache cleared');
 }

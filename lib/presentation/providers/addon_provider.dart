@@ -46,6 +46,21 @@ class AddonProvider extends ChangeNotifier {
     }
   }
 
+  /// Remove (deprovision) an add-on
+  Future<bool> removeAddon(String appId, String addonId) async {
+    try {
+      await _repository.deleteAddon(appId, addonId);
+      _addons = _addons.where((addon) => addon.id != addonId).toList();
+      _error = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Clear error
   void clearError() {
     _error = null;

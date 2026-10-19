@@ -149,4 +149,17 @@ class AppRepository {
       rethrow;
     }
   }
+
+  /// Roll back to a previous release (creates a new release from [releaseId])
+  Future<Release> rollbackRelease(String appId, String releaseId) async {
+    try {
+      final response = await _apiService.post(
+        ApiConstants.releases(appId),
+        data: {'release': releaseId},
+      );
+      return Release.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

@@ -9,42 +9,32 @@ class AppCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(
-        horizontal: ThemeConstants.spacingM,
-        vertical: ThemeConstants.spacingS,
-      ),
       child: Padding(
-        padding: const EdgeInsets.all(ThemeConstants.spacingM),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Bone.circle(size: 48),
-                const SizedBox(width: ThemeConstants.spacingM),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Bone.text(words: 2),
-                      const SizedBox(height: ThemeConstants.spacingXs),
-                      Bone.text(words: 1, fontSize: 12),
-                    ],
-                  ),
-                ),
+                Expanded(child: Bone.text(words: 2)),
+                const SizedBox(width: 12),
+                Bone.button(width: 72, height: 22),
               ],
             ),
-            const SizedBox(height: ThemeConstants.spacingS),
+            const SizedBox(height: 10),
+            Bone.text(words: 3, fontSize: 12),
+            const SizedBox(height: 12),
             Row(
-              children: [
-                Bone.icon(size: 16),
-                const SizedBox(width: ThemeConstants.spacingXs),
-                Bone.text(words: 1, fontSize: 12),
-                const SizedBox(width: ThemeConstants.spacingM),
-                Bone.icon(size: 16),
-                const SizedBox(width: ThemeConstants.spacingXs),
-                Bone.text(words: 2, fontSize: 12),
-              ],
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(
+                7,
+                (i) => Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: i == 6 ? 0 : 3),
+                    child: Bone(height: 22),
+                  ),
+                ),
+              ),
             ),
           ],
         ),

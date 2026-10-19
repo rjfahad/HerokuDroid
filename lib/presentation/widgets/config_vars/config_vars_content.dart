@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:skeletonizer/skeletonizer.dart';
-import 'package:herokudroid/presentation/providers/config_provider.dart';
-import 'package:herokudroid/presentation/widgets/common/error_widget.dart'
-    as custom;
-import 'package:herokudroid/presentation/widgets/common/skeleton_widgets.dart';
 
-/// Reusable widget for displaying and managing config vars
+import 'package:herokudroid/core/theme/paper_colors.dart';
+import 'package:herokudroid/core/theme/paper_tokens.dart';
+import 'package:herokudroid/presentation/providers/config_provider.dart';
+import 'package:herokudroid/presentation/widgets/paper/paper_components.dart';
+import 'package:herokudroid/presentation/widgets/paper/paper_snack.dart';
+import 'package:herokudroid/presentation/widgets/paper/paper_states.dart';
+
+/// Reusable widget for displaying and managing config vars.
 class ConfigVarsContent extends StatefulWidget {
   final String appId;
   final bool showFab;
@@ -23,6 +25,7 @@ class ConfigVarsContent extends StatefulWidget {
 }
 
 class _ConfigVarsContentState extends State<ConfigVarsContent> {
+  final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
   @override
@@ -33,16 +36,22 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
     });
   }
 
-  List<MapEntry<String, String>> _getFilteredConfigVars(
-    Map<String, String> configVars,
-  ) {
-    if (_searchQuery.isEmpty) {
-      return configVars.entries.toList();
-    }
-    return configVars.entries.where((entry) {
-      return entry.key.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          entry.value.toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<MapEntry<String, String>> _filtered(Map<String, String> configVars) {
+    if (_searchQuery.isEmpty) return configVars.entries.toList();
+    final q = _searchQuery.toLowerCase();
+    return configVars.entries
+        .where(
+          (e) =>
+              e.key.toLowerCase().contains(q) ||
+              e.value.toLowerCase().contains(q),
+        )
+        .toList();
   }
 
   void _showAddEditDialog({String? existingKey, String? existingValue}) {
@@ -53,8 +62,8 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(isEditing ? 'Edit Config Var' : 'Add Config Var'),
+      builder: (dialogContext) => AlertDialog(
+        title: Text(isEditing ? 'Edit config var' : 'New variable'),
         content: Form(
           key: formKey,
           child: Column(
@@ -62,7 +71,8 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
             children: [
               TextFormField(
                 controller: keyController,
-                enabled: !isEditing, // Key is immutable when editing
+                enabled: !isEditing,
+                textCapitalization: TextCapitalization.characters,
                 decoration: const InputDecoration(
                   labelText: 'Key',
                   hintText: 'DATABASE_URL',
@@ -81,140 +91,125 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: PaperTokens.l),
               TextFormField(
                 controller: valueController,
                 decoration: const InputDecoration(
                   labelText: 'Value',
-                  hintText: 'postgres://...',
+                  hintText: 'postgres://…',
                 ),
                 maxLines: 3,
-                validator: (value) {
-                  // Value can be empty for some config vars
-                  return null;
-                },
               ),
             ],
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancel'),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                final navigator = Navigator.of(context);
-                final scaffoldMessenger = ScaffoldMessenger.of(context);
-                final keyText = keyController.text.trim();
+              if (!formKey.currentState!.validate()) return;
+              final navigator = Navigator.of(dialogContext);
+              final keyText = keyController.text.trim();
+              navigator.pop();
 
-                navigator.pop();
-
-                final success = await context
-                    .read<ConfigProvider>()
-                    .setConfigVar(
-                      widget.appId,
-                      keyText,
-                      valueController.text.trim(),
-                    );
-
-                if (!mounted) return;
-                scaffoldMessenger.showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success
-                          ? '${isEditing ? 'Updated' : 'Added'} $keyText'
-                          : 'Failed to ${isEditing ? 'update' : 'add'} config var',
-                    ),
-                    backgroundColor: success ? Colors.green : Colors.red,
-                  ),
-                );
-              }
+              final success = await context
+                  .read<ConfigProvider>()
+                  .setConfigVar(
+                    widget.appId,
+                    keyText,
+                    valueController.text.trim(),
+                  );
+              if (!mounted) return;
+              PaperSnack.show(
+                context,
+                success
+                    ? '${isEditing ? 'Updated' : 'Added'} $keyText'
+                    : 'Failed to ${isEditing ? 'update' : 'add'} config var',
+                variant: success
+                    ? PaperSnackVariant.success
+                    : PaperSnackVariant.error,
+              );
             },
-            child: Text(isEditing ? 'Update' : 'Add'),
+            child: Text(isEditing ? 'Update' : 'Save'),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _confirmDelete(String key) async {
+  Future<bool> _confirmDelete(String key) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Config Var'),
+        title: const Text('Delete config var'),
         content: Text('Are you sure you want to delete "$key"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Cancel'),
           ),
-          TextButton(
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: context.paper.error,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],
       ),
     );
 
-    if (confirm == true && mounted) {
-      final success = await context.read<ConfigProvider>().deleteConfigVar(
-        widget.appId,
-        key,
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              success ? 'Deleted $key' : 'Failed to delete config var',
-            ),
-            backgroundColor: success ? Colors.green : Colors.red,
-          ),
-        );
-      }
-    }
+    if (confirm != true || !mounted) return false;
+
+    final success = await context.read<ConfigProvider>().deleteConfigVar(
+      widget.appId,
+      key,
+    );
+    if (!mounted) return true;
+    PaperSnack.show(
+      context,
+      success ? 'Deleted $key' : 'Failed to delete config var',
+      variant: success ? PaperSnackVariant.success : PaperSnackVariant.error,
+    );
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: context.paper.background,
       body: Column(
         children: [
-          // Search bar - doesn't need to rebuild when provider changes
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: InputDecoration(
-                labelText: 'Search config vars',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
+            padding: const EdgeInsets.fromLTRB(
+              PaperTokens.l,
+              PaperTokens.s,
+              PaperTokens.l,
+              PaperTokens.s,
+            ),
+            child: PaperTextField(
+              controller: _searchController,
+              hintText: 'Filter variables',
+              onChanged: (value) => setState(() => _searchQuery = value),
+              prefixIcon: const Icon(Icons.search, size: 20),
+              suffix: _searchQuery.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.close, size: 18),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    ),
             ),
           ),
-
-          // Content - use Consumer to only rebuild this part
           Expanded(
             child: Consumer<ConfigProvider>(
-              builder: (context, provider, child) => _buildContent(provider),
+              builder: (context, provider, _) => _buildContent(provider),
             ),
           ),
         ],
@@ -222,7 +217,7 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
       floatingActionButton: widget.showFab
           ? FloatingActionButton(
               onPressed: () => _showAddEditDialog(),
-              tooltip: 'Add Config Var',
+              tooltip: 'Add config var',
               child: const Icon(Icons.add),
             )
           : null,
@@ -230,73 +225,66 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
   }
 
   Widget _buildContent(ConfigProvider provider) {
-    if (provider.isLoading) {
-      // Show shimmer loading effect
-      return Skeletonizer(
-        enabled: true,
-        child: ListView.builder(
-          itemCount: 6,
-          itemBuilder: (context, index) => const ConfigVarSkeleton(),
-        ),
-      );
+    if (provider.isLoading && provider.configVars.isEmpty) {
+      return const PaperLoadingState(message: 'Loading config vars…');
     }
 
-    if (provider.error != null) {
-      return custom.ErrorWidget(
+    if (provider.error != null && provider.configVars.isEmpty) {
+      return PaperErrorState(
         message: provider.error!,
         onRetry: () => provider.loadConfigVars(widget.appId),
       );
     }
 
     if (provider.configVars.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.settings_outlined, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'No config vars',
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add environment variables for your app',
-              style: TextStyle(color: Colors.grey[500]),
-            ),
-          ],
-        ),
+      return PaperEmptyState(
+        icon: Icons.key_outlined,
+        title: 'No config vars',
+        message: 'Environment variables you add will show up here.',
+        action: widget.showFab
+            ? PaperButton(
+                label: 'Add variable',
+                variant: PaperButtonVariant.accent,
+                icon: Icons.add,
+                onPressed: () => _showAddEditDialog(),
+              )
+            : null,
       );
     }
 
-    final filteredVars = _getFilteredConfigVars(provider.configVars);
-
-    if (filteredVars.isEmpty) {
-      return Center(
-        child: Text(
-          'No config vars match "$_searchQuery"',
-          style: TextStyle(color: Colors.grey[600]),
-        ),
+    final vars = _filtered(provider.configVars);
+    if (vars.isEmpty) {
+      return PaperEmptyState(
+        icon: Icons.search_off,
+        title: 'No matches',
+        message: 'No config vars match "$_searchQuery".',
       );
     }
 
-    // Add pull-to-refresh
     return RefreshIndicator(
-      onRefresh: () async {
-        await provider.loadConfigVars(widget.appId);
-      },
+      onRefresh: () async => provider.loadConfigVars(widget.appId),
       child: ListView.builder(
-        itemCount: filteredVars.length,
+        padding: const EdgeInsets.fromLTRB(
+          PaperTokens.l,
+          PaperTokens.xs,
+          PaperTokens.l,
+          PaperTokens.xl,
+        ),
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: vars.length,
         itemBuilder: (context, index) {
-          final entry = filteredVars[index];
-          return ConfigVarItem(
-            configKey: entry.key,
-            configValue: entry.value,
-            onEdit: () => _showAddEditDialog(
-              existingKey: entry.key,
-              existingValue: entry.value,
+          final entry = vars[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: PaperTokens.s),
+            child: _ConfigVarCard(
+              configKey: entry.key,
+              configValue: entry.value,
+              onEdit: () => _showAddEditDialog(
+                existingKey: entry.key,
+                existingValue: entry.value,
+              ),
+              onDelete: () => _confirmDelete(entry.key),
             ),
-            onDelete: () => _confirmDelete(entry.key),
           );
         },
       ),
@@ -304,105 +292,100 @@ class _ConfigVarsContentState extends State<ConfigVarsContent> {
   }
 }
 
-/// Widget for displaying a single config var with masked value
-class ConfigVarItem extends StatefulWidget {
-  final String configKey;
-  final String configValue;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  const ConfigVarItem({
+class _ConfigVarCard extends StatefulWidget {
+  const _ConfigVarCard({
     required this.configKey,
     required this.configValue,
     required this.onEdit,
     required this.onDelete,
-    super.key,
   });
 
+  final String configKey;
+  final String configValue;
+  final VoidCallback onEdit;
+  final Future<bool> Function() onDelete;
+
   @override
-  State<ConfigVarItem> createState() => _ConfigVarItemState();
+  State<_ConfigVarCard> createState() => _ConfigVarCardState();
 }
 
-class _ConfigVarItemState extends State<ConfigVarItem> {
+class _ConfigVarCardState extends State<_ConfigVarCard> {
   bool _isVisible = false;
 
   String get _displayValue {
-    if (_isVisible) return widget.configValue;
-    // Mask value (show first 4 chars, rest as dots)
+    if (_isVisible || widget.configValue.isEmpty) return widget.configValue;
     if (widget.configValue.length <= 4) return '••••';
-    return '${widget.configValue.substring(0, 4)}${'•' * (widget.configValue.length - 4)}';
+    return '${widget.configValue.substring(0, 4)}'
+        '${'•' * (widget.configValue.length - 4)}';
   }
 
-  void _copyToClipboard() {
+  void _copy() {
     Clipboard.setData(ClipboardData(text: widget.configValue));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Copied ${widget.configKey} to clipboard'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    PaperSnack.show(context, 'Copied ${widget.configKey}');
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.paper;
     return Dismissible(
       key: Key(widget.configKey),
       direction: DismissDirection.endToStart,
       background: Container(
-        color: Colors.red,
+        decoration: BoxDecoration(
+          color: c.error,
+          borderRadius: BorderRadius.circular(PaperTokens.rCard),
+        ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete, color: Colors.white),
+        padding: const EdgeInsets.only(right: PaperTokens.l),
+        child: const Icon(Icons.delete_outline, color: Colors.white),
       ),
       confirmDismiss: (_) async {
-        widget.onDelete();
-        return false; // Don't auto-dismiss, let the delete callback handle it
+        await widget.onDelete();
+        return false;
       },
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: ListTile(
-          title: Text(
-            widget.configKey,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontFamily: 'monospace',
-            ),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Row(
+      child: PaperCard(
+        onTap: widget.onEdit,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            PaperCaption(widget.configKey),
+            const SizedBox(height: PaperTokens.s),
+            Row(
               children: [
                 Expanded(
                   child: Text(
                     _displayValue,
-                    style: const TextStyle(fontFamily: 'monospace'),
-                    overflow: TextOverflow.ellipsis,
+                    style: PaperText.mono.copyWith(color: c.muted),
                     maxLines: _isVisible ? 3 : 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    _isVisible ? Icons.visibility_off : Icons.visibility,
-                  ),
-                  iconSize: 20,
-                  onPressed: () {
-                    setState(() {
-                      _isVisible = !_isVisible;
-                    });
-                  },
+                const SizedBox(width: PaperTokens.s),
+                PaperIconButton(
+                  icon: _isVisible
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  size: 30,
                   tooltip: _isVisible ? 'Hide' : 'Show',
+                  onPressed: () => setState(() => _isVisible = !_isVisible),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.copy),
-                  iconSize: 20,
-                  onPressed: _copyToClipboard,
+                const SizedBox(width: PaperTokens.xs),
+                PaperIconButton(
+                  icon: Icons.copy_outlined,
+                  size: 30,
                   tooltip: 'Copy',
+                  onPressed: _copy,
+                ),
+                const SizedBox(width: PaperTokens.xs),
+                PaperIconButton(
+                  icon: Icons.edit_outlined,
+                  size: 30,
+                  tooltip: 'Edit',
+                  onPressed: widget.onEdit,
                 ),
               ],
             ),
-          ),
-          onTap: widget.onEdit,
-          onLongPress: widget.onEdit,
+          ],
         ),
       ),
     );

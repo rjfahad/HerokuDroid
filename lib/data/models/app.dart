@@ -51,6 +51,8 @@ class App {
       buildpackProvidedDescription:
           json['buildpack_provided_description'] as String?,
       owner: json['owner'] as Map<String, dynamic>?,
+      totalDynos: json['total_dynos'] as int?,
+      runningDynos: json['running_dynos'] as int?,
     );
   }
 
@@ -68,6 +70,8 @@ class App {
       'maintenance': maintenance,
       'buildpack_provided_description': buildpackProvidedDescription,
       'owner': owner,
+      'total_dynos': totalDynos,
+      'running_dynos': runningDynos,
     };
   }
 
